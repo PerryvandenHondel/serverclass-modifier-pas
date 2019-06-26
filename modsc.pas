@@ -119,6 +119,8 @@ begin
             //   3) We found a = char in the buffer (whitelist.x = hostname)
             //
             host := Trim(RightStr(buffer, Length(buffer) - Pos('=', buffer)));
+
+            // Add this found host name to the array of hosts.
             HostRecordAdd(host);
         end; // of if
 

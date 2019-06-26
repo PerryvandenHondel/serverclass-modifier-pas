@@ -34,26 +34,52 @@ var
     hostArray: THostArray;
 
 
+function InHostArray(host: AnsiString): Boolean;
+//
+// Search for host in hostArray
+// Returns:
+//   true > found the name in the array
+//   false > Did not found the host in the array
+//
+var
+    r: Boolean;
+    i: integer;
+begin
+    r := false;
+
+    for i := 0 to High(hostArray) do
+    begin
+        if host = hostArray[i].host then
+            r := true;
+    end; // of for
+    InHostArray := r;
+end; // of function InHostArray();
+
+
 procedure HostRecordAdd(host: AnsiString);
 //
 //  Add new record to table
-//
-//      list:       whitelist or blacklist
 //      host:       hostname   
 //
 var
     size: integer;
+    
 begin
-    writeln(' HostRecordAdd(): ', host);
+    writeln('HostRecordAdd(): ', host);
 
-    // Get the current size of the hostArray.
-    size := Length(hostArray);
+    if InHostArray(host) = false then 
+    begin
+        // The host does not exist in the array; add it.
 
-    // Increase the size of the hostArray with extra room for one.
-    SetLength(hostArray, size + 1);
+        // Get the current size of the hostArray.
+        size := Length(hostArray);
 
-    // Assign the host to the hostArray.host field.
-    hostArray[size].host := host;
+        // Increase the size of the hostArray with extra room for one.
+        SetLength(hostArray, size + 1);
+
+        // Assign the host to the hostArray.host field.
+        hostArray[size].host := host; 
+    end;
 end; // of procedure AddRecord
 
 
@@ -140,9 +166,15 @@ begin
 
 
 
-    BuildTable(fnOrg, paramServerClass, paramList);
+    //BuildTable(fnOrg, paramServerClass, paramList);
 
     HostRecordAdd('totallynewserver');
+    HostRecordAdd('totallynewserver1');
+    HostRecordAdd('totallynewserver2');
+    HostRecordAdd('serverfind');
+    HostRecordAdd('totallynewserver4');
+    HostRecordAdd('totallynewserver');
+    HostRecordAdd('serverfind');
     
 
     HostRecordShow();

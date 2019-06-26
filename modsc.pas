@@ -17,20 +17,58 @@ uses
     SysUtils;
 
 
+type
+    THostRec = record
+        host: AnsiString;
+    end;
+    THostArray = array of THostRec;
+
+
 var
-    tfOrg: TextFile;
+    //tfOrg: TextFile;
     fnOrg: AnsiString;
     paramServerClass: AnsiString;
     paramList: AnsiString;
     paramAction: AnsiString;
     paramHost: AnsiString;
+    hostArray: THostArray;
 
 
-procedure AddRecord(sc: AnsiString; host: AnsiString);
-
+procedure HostRecordAdd(host: AnsiString);
+//
+//  Add new record to table
+//
+//      list:       whitelist or blacklist
+//      host:       hostname   
+//
+var
+    size: integer;
 begin
-    writeln('AddRecord(): ', list, ' > ', host);
+    writeln(' HostRecordAdd(): ', host);
+
+    // Get the current size of the hostArray.
+    size := Length(hostArray);
+
+    // Increase the size of the hostArray with extra room for one.
+    SetLength(hostArray, size + 1);
+
+    // Assign the host to the hostArray.host field.
+    hostArray[size].host := host;
 end; // of procedure AddRecord
+
+
+procedure HostRecordShow();
+var
+    i: integer;
+begin
+    writeln();
+    writeln('HostRecordShow()');
+    
+    for i := 0 to High(hostArray) do
+    begin
+        writeln(i, ': ', hostArray[i].host);
+    end; // of for
+end; // of procedure HostRecordShow
 
 
 procedure BuildTable(fn: Ansistring; sc: AnsiString; list: AnsiString);
@@ -72,10 +110,16 @@ begin
 
         writeln(line, ' inServerClass=', inServerClass, '   inList=', inList, ' > ', buffer);
 
-        if (inServerClass = true) and (inList = true) then
+        if (inServerClass = true) and (inList = true) and (Pos('=', buffer) > 0) then
         begin
+            //
+            // Only do this when these 3 rules apply:
+            //   1) inServerClass = true
+            //   2) inList = true
+            //   3) We found a = char in the buffer (whitelist.x = hostname)
+            //
             host := Trim(RightStr(buffer, Length(buffer) - Pos('=', buffer)));
-            writeln('ADD RECORD: ', list, ' > ', host);
+            HostRecordAdd(host);
         end; // of if
 
     end; // of while
@@ -86,7 +130,8 @@ end; // of procedure BuildTable
 
 begin
     fnOrg := './serverclass.conf';
-    paramServerClass := 'svc_testclass';
+    //paramServerClass := 'svc_testclass';
+    paramServerClass := 'sc_emptyone';
     paramList := 'whitelist';
     paramAction := 'add';
     paramHost := 'servertodo10';
@@ -94,6 +139,11 @@ begin
 
 
     BuildTable(fnOrg, paramServerClass, paramList);
+
+    HostRecordAdd('totallynewserver');
+    
+
+    HostRecordShow();
 
     writeln('Program completed succesfully.');
 end. // of program ModifyServerClass

@@ -229,7 +229,84 @@ begin
     begin
         writeln(listType, '.', i, ' = ', hostArray[i].host);
     end; // of for
+    WriteLn();
 end; // of procedure WriteRecordToConfig()
+
+
+procedure WriteNewConfig(fn: AnsiString; sc: AnsiString; list: AnsiString);
+//
+// Write a new serverclass.conf file.
+//
+var
+    tf: TextFile;
+    line: integer;
+    buffer: AnsiString;
+    inServerClass: Boolean;
+    inList: Boolean;
+begin
+    AssignFile(tf, fn);
+    Reset(tf);
+
+    WriteLn();
+    writeln('WriteNewConfig()');
+
+
+    line := 0;
+    inServerClass := false;
+    inList := false;
+
+    while not eof(tf) do
+    begin
+        readln(tf, buffer);
+        Inc(line);
+        //writeln(line, ': ', buffer);
+
+        if Pos('[serverClass:' + sc + ']', buffer) > 0 then
+        begin
+            //writeln('-- FOUND SERVERCLASS: ', sc);
+            inServerClass := true;
+        end; // of if 
+
+        if Pos(list, buffer) > 0 then
+        begin
+            //writeln('-- FOUND LIST: ', list);
+            inList := true;
+        end // of if 
+        else 
+            inList := false;
+
+        writeln(line, ': ', buffer);
+
+
+
+        if ((inList = true) and (inServerClass = true)) or ((inServerClass = true) and (Length(buffer) = 0)) then
+        begin
+            // When an empty line is encounterd then the server class has no more entries.
+            inServerClass := false;
+            //WriteLn('WRITE NEW List with hosts for ', list);
+             WriteRecordToConfig(list);
+        end;
+
+        {
+        if (inServerClass = true) and (inList = true) and (Pos('=', buffer) > 0) then
+        begin
+            //
+            // Only do this when these 3 rules apply:
+            //   1) inServerClass = true
+            //   2) inList = true
+            //   3) We found a = char in the buffer (whitelist.x = hostname)
+            //
+            host := Trim(RightStr(buffer, Length(buffer) - Pos('=', buffer)));
+
+            // Add this found host name to the array of hosts.
+            HostRecordAdd(host);
+        end; // of if
+        }
+    end; // of while
+
+    Close(tf);
+
+end; // of procedure WriteNewConfig()
 
 
 procedure ProgUsage();
@@ -280,6 +357,8 @@ begin
     HostRecordShow();
 
     WriteRecordToConfig(paramList);
+
+    WriteNewConfig(fnOrg, paramServerClass, paramList);
 
     writeln('Program completed succesfully.');
 end. // of program ModifyServerClass

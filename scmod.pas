@@ -3,7 +3,7 @@ program ServerClassModifier;
 //
 // Modify the Splunk serverclass.conf
 //
-// Version 0.4
+// Version 0.5
 //
 
 
@@ -15,10 +15,6 @@ uses
     Crt,
     SysUtils;
 
-
-
-type
-    
 
 var
     pathServerClassConf: AnsiString;
@@ -48,31 +44,7 @@ begin
     GetPathServerClassConf := r;
 end; // of function ReadLocationServerClass
 
-
-procedure BuildArray(p: AnsiString);
-var
-    tf: TextFile;
-    l: Integer;
-    buffer: AnsiString;
-begin
-    AssignFile(tf, p);
-    Reset(tf);
-
-    l := 0;
-   
-    while not eof(tf) do
-    begin
-        readln(tf, buffer);
-        Inc(l);
-
-        WriteLn(l, ': ', buffer);
-    end; // of while
-    Close(tf);
-end; // of procedure BuildArray()
-
 begin
     pathServerClassConf := GetPathServerClassConf();
     WriteLn(pathServerClassConf);
-
-    BuildArray(pathServerClassConf);
 end. // of program ServerClassModifier

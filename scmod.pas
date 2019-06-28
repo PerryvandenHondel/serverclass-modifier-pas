@@ -60,6 +60,7 @@ begin
     Reset(tf);
 
     l := 0;
+    inServerClass := false;
    
     while not eof(tf) do
     begin
@@ -81,7 +82,7 @@ begin
         end; // of if
 
 
-        WriteLn(l:4, ': INSERVERCLASS=', inServerClass, ' ', buffer);
+        WriteLn(l:4, ': INSERVERCLASS=', inServerClass:5, ' ', buffer);
     end; // of while
 end; // of procedure ProcessConfig
 

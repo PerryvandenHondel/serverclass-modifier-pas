@@ -56,8 +56,8 @@ var
     bufferRead: AnsiString;
     inServerClass: Boolean;
     inListType: Boolean;
-    highestList: Integer;
-    t: AnsiString;
+    listHighest: Integer;
+    listCurrent: Integer;
 begin
     AssignFile(tf, fn);
     Reset(tf);
@@ -65,7 +65,8 @@ begin
     l := 0;
     inServerClass := false;
     inListType := false;
-    highestList := -1; // Higest found number of a list type; can be 0 for one entry. 'whitelist.0 = hostname'
+    listHighest := -1; // Higest found number of a list type; can be 0 for first entry. 'whitelist.0 = hostname'
+    listCurrent := -1;
    
     while not eof(tf) do
     begin
@@ -74,7 +75,7 @@ begin
 
         if Pos('[serverClass:' + paramServerClass + ']', bufferRead) > 0 then
         begin
-            //writeln('-- FOUND SERVERCLASS: ', sc);
+            // Found the server class
             inServerClass := true;
         end; // of if 
 
@@ -86,8 +87,11 @@ begin
             //WriteLn(Pos('=', bufferRead));
             
             //t := Trim(Copy(bufferRead, Pos('.', bufferRead) + 1, (Pos(' =', bufferRead) - 2) - Pos('.', bufferRead) + 1));
-            highestList := StrToInt(Trim(Copy(bufferRead, Pos('.', bufferRead) + 1, (Pos(' =', bufferRead) - 2) - Pos('.', bufferRead) + 1)));
-            WriteLn(highestList);
+            listCurrent := StrToInt(Trim(Copy(bufferRead, Pos('.', bufferRead) + 1, (Pos(' =', bufferRead) - 2) - Pos('.', bufferRead) + 1)));
+            if listCurrent > listHighest then 
+                listHighest := listCurrent;
+
+           // WriteLn(listHighest);
         end; // of if
 
         if (inServerClass = true) and (Length(bufferRead) = 0) then
@@ -96,11 +100,12 @@ begin
             // Stepped out of the serverclass
             inServerClass := false;
             inListType := false;
-        end; // of if
+            listHighest := 0; // Number of list will be 0 for the first
+        end; // of if 
+  
+        WriteLn(l:4, ': INSC=', inServerClass:5, ' INLT=', inListType:5, ' LH=', listHighest:3, ' > ', bufferRead);
 
-       
-
-        WriteLn(l:4, ': INSC=', inServerClass:5, ' INLT=', inListType:5, ' > ', bufferRead);
+        //WriteLn('Higest List Type number = ', listHighest);
     end; // of while
 end; // of procedure ProcessConfig
 
@@ -109,7 +114,8 @@ begin
     pathServerClassConf := GetPathServerClassConf();
     WriteLn(pathServerClassConf);
 
-    paramServerClass := 'svc_oslindel_linux_p';
+    //paramServerClass := 'svc_oslindel_linux_p'; // ServerClass with whitelist entries
+    paramserverClass := 'svc_emptyclassservers'; // Empty ServerClass 
     paramListType := 'whitelist';
     paramAction := 'add';
     paramHost := 'lsrvnew01';

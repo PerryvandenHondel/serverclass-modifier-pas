@@ -53,36 +53,54 @@ procedure ProcessConfig(fn: AnsiString);
 var
     tf: TextFile;
     l: Integer;
-    buffer: AnsiString;
+    bufferRead: AnsiString;
     inServerClass: Boolean;
+    inListType: Boolean;
+    highestList: Integer;
+    t: AnsiString;
 begin
     AssignFile(tf, fn);
     Reset(tf);
 
     l := 0;
     inServerClass := false;
+    inListType := false;
+    highestList := -1; // Higest found number of a list type; can be 0 for one entry. 'whitelist.0 = hostname'
    
     while not eof(tf) do
     begin
-        ReadLn(tf, buffer);
+        ReadLn(tf, bufferRead);
         Inc(l);
-        
 
-        if Pos('[serverClass:' + paramServerClass + ']', buffer) > 0 then
+        if Pos('[serverClass:' + paramServerClass + ']', bufferRead) > 0 then
         begin
             //writeln('-- FOUND SERVERCLASS: ', sc);
             inServerClass := true;
         end; // of if 
 
-        if (inServerClass = true) and (Length(buffer) = 0) then
+         if (inServerClass = true) and (Pos(paramListType, bufferRead) > 0) then
+        begin
+            // We have entries for the list type.
+            inListType := true;
+            //WriteLn(Pos('.', bufferRead));
+            //WriteLn(Pos('=', bufferRead));
+            
+            //t := Trim(Copy(bufferRead, Pos('.', bufferRead) + 1, (Pos(' =', bufferRead) - 2) - Pos('.', bufferRead) + 1));
+            highestList := StrToInt(Trim(Copy(bufferRead, Pos('.', bufferRead) + 1, (Pos(' =', bufferRead) - 2) - Pos('.', bufferRead) + 1)));
+            WriteLn(highestList);
+        end; // of if
+
+        if (inServerClass = true) and (Length(bufferRead) = 0) then
         begin
             // You are in the serverclass and encounter a empty line
             // Stepped out of the serverclass
             inServerClass := false;
+            inListType := false;
         end; // of if
 
+       
 
-        WriteLn(l:4, ': INSERVERCLASS=', inServerClass:5, ' ', buffer);
+        WriteLn(l:4, ': INSC=', inServerClass:5, ' INLT=', inListType:5, ' > ', bufferRead);
     end; // of while
 end; // of procedure ProcessConfig
 

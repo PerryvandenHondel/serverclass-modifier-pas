@@ -18,6 +18,10 @@ uses
 
 var
     pathServerClassConf: AnsiString;
+    paramServerClass: AnsiString;
+    paramListType: AnsiString;
+    paramAction: AnsiString;
+    paramHost: AnsiString;
 
 
 function GetPathServerClassConf(): AnsiString;
@@ -42,9 +46,21 @@ begin
     Close(tf);
 
     GetPathServerClassConf := r;
-end; // of function ReadLocationServerClass
+end; // of function GetPathServerClassConf
+
+
+
+
 
 begin
     pathServerClassConf := GetPathServerClassConf();
     WriteLn(pathServerClassConf);
+
+    paramServerClass := 'svc_oslindel_linux_p';
+    paramListType := 'whitelist';
+    paramAction := 'add';
+    paramHost := 'lsrvnew01';
+
+
+    WriteLn('Action on ', pathServerClassConf, ' in server class ', paramServerClass, ' for the ', paramListType,' to ', paramAction, ' ', paramHost);
 end. // of program ServerClassModifier

@@ -83,29 +83,38 @@ begin
         begin
             // We have entries for the list type.
             inListType := true;
-            //WriteLn(Pos('.', bufferRead));
-            //WriteLn(Pos('=', bufferRead));
             
-            //t := Trim(Copy(bufferRead, Pos('.', bufferRead) + 1, (Pos(' =', bufferRead) - 2) - Pos('.', bufferRead) + 1));
             listCurrent := StrToInt(Trim(Copy(bufferRead, Pos('.', bufferRead) + 1, (Pos(' =', bufferRead) - 2) - Pos('.', bufferRead) + 1)));
             if listCurrent > listHighest then 
                 listHighest := listCurrent;
-
-           // WriteLn(listHighest);
         end; // of if
 
         if (inServerClass = true) and (Length(bufferRead) = 0) then
         begin
             // You are in the serverclass and encounter a empty line
-            // Stepped out of the serverclass
+            // Stepping out of the serverclass part
             inServerClass := false;
             inListType := false;
+            
+            if UpperCase(paramAction) = 'ADD' then
+            begin
+                // 
+                WriteLn(paramListType, '.', listHighest + 1, ' = ', paramHost);
+            end; // of if
+
             listHighest := 0; // Number of list will be 0 for the first
         end; // of if 
+
+        if (inServerClass = true) and (Pos(paramHost, bufferRead) > 0) and (UpperCase(paramAction) = 'DEL') then
+        begin
+            // When in the serverclass and the host is found and you need to delete it.
+            //
+            WriteLn(' Delete this host: ', paramHost);
+        end; 
+       
+
   
         WriteLn(l:4, ': INSC=', inServerClass:5, ' INLT=', inListType:5, ' LH=', listHighest:3, ' > ', bufferRead);
-
-        //WriteLn('Higest List Type number = ', listHighest);
     end; // of while
 end; // of procedure ProcessConfig
 
@@ -114,11 +123,13 @@ begin
     pathServerClassConf := GetPathServerClassConf();
     WriteLn(pathServerClassConf);
 
-    //paramServerClass := 'svc_oslindel_linux_p'; // ServerClass with whitelist entries
-    paramserverClass := 'svc_emptyclassservers'; // Empty ServerClass 
+    paramServerClass := 'svc_oslindel_linux_p'; // ServerClass with whitelist entries
+    //paramServerClass := 'svc_testclass';
+    //paramServerClass := 'not_existsing_sc';
+    //paramserverClass := 'svc_emptyclassservers'; // Empty ServerClass 
     paramListType := 'whitelist';
-    paramAction := 'add';
-    paramHost := 'lsrvnew01';
+    paramAction := 'del';
+    paramHost := 'lsrv0011';
 
     WriteLn('Action on ', pathServerClassConf, ' in server class ', paramServerClass, ' for the ', paramListType,' to ', paramAction, ' ', paramHost);
 

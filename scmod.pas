@@ -1,5 +1,4 @@
 program ServerClassModifier;
-
 //
 // Modify the Splunk serverclass.conf
 //
@@ -52,15 +51,25 @@ end; // of function GetPathServerClassConf
 procedure ProcessConfig(fn: AnsiString);
 var
     tf: TextFile;
+    tfnew: TextFile;
+
     l: Integer;
+    fnNew: AnsiString;
     bufferRead: AnsiString;
+    bufferWrite: AnsiString;
     inServerClass: Boolean;
     inListType: Boolean;
     listHighest: Integer;
     listCurrent: Integer;
 begin
+    pathServerClassConfNew := fn + '.new';
+
     AssignFile(tf, fn);
     Reset(tf);
+
+    AssignFile(tfnew, fnNew);
+    ReWrite(tfNew);
+
 
     l := 0;
     inServerClass := false;
@@ -116,6 +125,10 @@ begin
   
         WriteLn(l:4, ': INSC=', inServerClass:5, ' INLT=', inListType:5, ' LH=', listHighest:3, ' > ', bufferRead);
     end; // of while
+
+    Close(tfNew);
+
+    Close(tf);
 end; // of procedure ProcessConfig
 
 

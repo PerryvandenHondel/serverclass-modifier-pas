@@ -62,13 +62,14 @@ var
     listHighest: Integer;
     listCurrent: Integer;
 begin
-    pathServerClassConfNew := fn + '.new';
+    fnNew := fn + '.new';
 
     AssignFile(tf, fn);
     Reset(tf);
 
     AssignFile(tfnew, fnNew);
     ReWrite(tfNew);
+    bufferWrite := '';
 
 
     l := 0;
@@ -107,8 +108,11 @@ begin
             
             if UpperCase(paramAction) = 'ADD' then
             begin
-                // 
-                WriteLn(paramListType, '.', listHighest + 1, ' = ', paramHost);
+                // Add a new system to the list type.
+                bufferWrite := paramListType + '.' + IntToStr(listHighest + 1) + ' = ' + paramHost;
+                WriteLn('Adding new line to ', fnNew, ': ', bufferWrite);
+                WriteLn(tfNew, bufferWrite);
+
             end; // of if
 
             listHighest := 0; // Number of list will be 0 for the first
@@ -119,11 +123,11 @@ begin
             // When in the serverclass and the host is found and you need to delete it.
             //
             WriteLn(' Delete this host: ', paramHost);
-        end; 
-       
-
+        end;
   
         WriteLn(l:4, ': INSC=', inServerClass:5, ' INLT=', inListType:5, ' LH=', listHighest:3, ' > ', bufferRead);
+        bufferWrite := bufferRead;
+        WriteLn(tfnew, bufferWrite);
     end; // of while
 
     Close(tfNew);
@@ -136,13 +140,13 @@ begin
     pathServerClassConf := GetPathServerClassConf();
     WriteLn(pathServerClassConf);
 
-    paramServerClass := 'svc_oslindel_linux_p'; // ServerClass with whitelist entries
+    //paramServerClass := 'svc_oslindel_linux_p'; // ServerClass with whitelist entries
     //paramServerClass := 'svc_testclass';
     //paramServerClass := 'not_existsing_sc';
-    //paramserverClass := 'svc_emptyclassservers'; // Empty ServerClass 
+    paramserverClass := 'svc_emptyclassservers'; // Empty ServerClass 
     paramListType := 'whitelist';
-    paramAction := 'del';
-    paramHost := 'lsrv0011';
+    paramAction := 'add';
+    paramHost := 'lsrvtotallynew1*';
 
     WriteLn('Action on ', pathServerClassConf, ' in server class ', paramServerClass, ' for the ', paramListType,' to ', paramAction, ' ', paramHost);
 

@@ -77,7 +77,7 @@ var
     bufferRead: AnsiString;
     bufferWrite: AnsiString;
     inServerClass: Boolean;
-    //inListType: Boolean;
+    inListType: Boolean;
     listHighest: Integer;
     listCurrent: Integer;
     skipLine: Boolean;
@@ -98,7 +98,7 @@ begin
 
     l := 0;
     inServerClass := false;
-    //inListType := false;
+    inListType := false;
     skipLine := false;
     listHighest := -1; // Higest found number of a list type; can be 0 for first entry. 'whitelist.0 = hostname'
     listCurrent := -1;
@@ -117,8 +117,9 @@ begin
          if (inServerClass = true) and (Pos(paramListType, bufferRead) > 0) then
         begin
             // We have entries for the list type.
-            //inListType := true;
+            inListType := true;
             
+            // Get the current number of the listtype: whitelist.x = hostname
             listCurrent := StrToInt(Trim(Copy(bufferRead, Pos('.', bufferRead) + 1, (Pos(' =', bufferRead) - 2) - Pos('.', bufferRead) + 1)));
             if listCurrent > listHighest then 
                 listHighest := listCurrent;
@@ -129,7 +130,7 @@ begin
             // You are in the serverclass and encounter a empty line
             // Stepping out of the serverclass part
             inServerClass := false;
-            // inListType := false;
+            inListType := false;
             
             if UpperCase(paramAction) = 'ADD' then
             begin
@@ -143,7 +144,7 @@ begin
             listHighest := 0; // Number of list will be 0 for the first
         end; // of if 
 
-        if (inServerClass = true) and (Pos(paramHost, bufferRead) > 0) and (UpperCase(paramAction) = 'DEL') then
+        if (inServerClass = true) and (inListType = true) and (Pos(paramHost, bufferRead) > 0) and (UpperCase(paramAction) = 'DEL') then
         begin
             // When in the serverclass and the host is found and you need to delete it.
             WriteLn('Delete this host: ', paramHost);
@@ -184,6 +185,14 @@ begin
     Halt; // Stop the program.
 end; // of procedure ProgUsage()
 
+
+
+procedure ProgDone();
+begin
+    WriteLn;
+    Writeln('splunk reload deploy-server -class ' + paramServerClass);
+    WriteLn;
+end; // of procedure ProgDone()
 
 begin
     Sleep(1001);

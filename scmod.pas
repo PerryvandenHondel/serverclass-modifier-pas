@@ -244,4 +244,5 @@ begin
     WriteLn('Action on ', pathServerClassConf, ' in server class ', paramServerClass, ' for the ', paramListType,' to ', paramAction, ' ', paramHost);
 
     ProcessConfig(pathServerClassConf);
+    ProgDone();
 end. // of program ServerClassModifier

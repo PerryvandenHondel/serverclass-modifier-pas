@@ -1,6 +1,4 @@
-serverclass.conf.test
-serverclass.conf.org
-serverclass.conf.new
+serverclass.*
 modsc.o
 modsc
 modsc
@@ -11,3 +9,4 @@ scmod.o
 scmod
 scmod-0.1.pas
 scmod-0.2.pas
+serverclass.conf.rabobank

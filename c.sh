@@ -4,13 +4,13 @@
 ##
 ## Compile the source and move the executable to the bin directory
 ##
-fpc scproper.pas -obin/scproper
+fpc scmod.pas -obin/scmod
 
 
 ##
 ## Remove the object file.
 ##
-rm bin/scproper.o
+rm bin/scmod.o
 
 #git add bin/scproper
 #git commit -m "Updated scproper executable"

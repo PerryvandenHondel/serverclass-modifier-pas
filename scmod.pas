@@ -14,6 +14,8 @@ uses
     Classes,
     Crt,
     DateUtils,
+    UTextFile,
+    USupLib,
     SysUtils;
 
 
@@ -234,9 +236,10 @@ begin
 }
 
 
-    pathServerClassConf := GetPathServerClassConf();
-    WriteLn('Working on config file: ', pathServerClassConf);
+    //pathServerClassConf := GetPathServerClassConf();
+    //WriteLn('Working on config file: ', pathServerClassConf);
 
+    pathServerClassConf := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'PathServerClass');
 
     //paramServerClass := 'svc_oslindel_linux_p'; // ServerClass with whitelist entries
     //paramServerClass := 'svc_testclass';
@@ -248,6 +251,6 @@ begin
 
     WriteLn('Action on ', pathServerClassConf, ' in server class ', paramServerClass, ' for the ', paramListType,' to ', paramAction, ' ', paramHost);
 
-    ProcessConfig(pathServerClassConf);
+    //ProcessConfig(pathServerClassConf);
     ProgDone();
 end. // of program ServerClassModifier

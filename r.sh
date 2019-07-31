@@ -10,6 +10,9 @@
 ##
 ## Run the program
 ##
-bin/scmod svc_testclass whitelist del testjes1
+bin/scmod svc_testclass whitelist add dummybox2000*
+bin/scmod svc_testclass whitelist add dummybox2010*
+bin/scmod svc_testclass whitelist add dummybox2933*
+bin/scmod svc_testclass whitelist add dummybox2929*
 
 

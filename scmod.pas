@@ -2,7 +2,7 @@ program ServerClassModifier;
 //
 // Modify the Splunk serverclass.conf
 //
-// Version 0.5
+// Version 0.6
 //
 
 
@@ -15,6 +15,10 @@ uses
     Crt,
     DateUtils,
     SysUtils;
+
+
+const  
+    VERSION = '0.6';
 
 
 var
@@ -38,6 +42,7 @@ begin
     r := '';
 
     path := ParamStr(0) +'.conf';
+    WriteLn('Config file is ', path);
     
     AssignFile(tf, path);
     Reset(tf);
@@ -174,12 +179,12 @@ end; // of procedure ProcessConfig
 procedure ProgUsage();
 begin
     writeln();
-    writeln('scmod v0.5 - Splunk serverclass.conf modifier, add or delete hosts from a server class in the whitelist or blacklist section.');
+    writeln('scmod v', VERSION, ' - Splunk serverclass.conf modifier, add or delete hosts from a server class in the whitelist or blacklist section.');
     writeln();
     writeln('Usage: scmod <serverclass> <listtype> <action> <hostname>');
     writeln('  <serverclass>        Name of the server class to modify');
     writeln('  <listtype>           Select the "whitelist" or "blacklist"');
-    writeln('  <action>             What action to perform on the serverclass, select "add" or "delete"');
+    writeln('  <action>             What action to perform on the serverclass, select "add" or "del"');
     writeln('  <hostname>           Name of host to add or delete from the server class');
     writeln();
     Halt; // Stop the program.

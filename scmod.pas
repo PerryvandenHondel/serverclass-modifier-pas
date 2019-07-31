@@ -13,6 +13,7 @@ program ServerClassModifier;
 uses
     Classes,
     Crt,
+    Dos,
     DateUtils,
     UTextFile,
     USupLib,
@@ -25,10 +26,12 @@ const
 
 var
     pathServerClassConf: AnsiString;
+    pathLog: AnsiString;
     paramServerClass: AnsiString;
     paramListType: AnsiString;
     paramAction: AnsiString;
     paramHost: AnsiString;
+    log: CTextFile;
 
 
 function GetPathServerClassConf(): AnsiString;
@@ -55,20 +58,6 @@ begin
 
     GetPathServerClassConf := r;
 end; // of function GetPathServerClassConf
-
-
-procedure CopyTheFile(fnSource, fnDest: AnsiString);
-var
-    SourceF, DestF: TFileStream;
-begin
-    SourceF := TFileStream.Create(fnSource, fmOpenRead);
-    DestF := TFileStream.Create(fnDest, fmCreate);
-
-    DestF.CopyFrom(SourceF, SourceF.Size);
-    
-    SourceF.Free;
-    DestF.Free;
-end; // of procedure CopyTheFile()
 
 
 procedure ProcessConfig(fnConf: AnsiString);
@@ -241,6 +230,14 @@ begin
 
     pathServerClassConf := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'PathServerClass');
 
+    pathLog := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'PathLog');
+    WriteLn('pathLog=', pathLog);
+
+    log := CTextFile.Create(pathLog);
+	log.OpenFileWrite();
+
+    //WriteLn('GetCurrentDateTimeMicro()=', GetCurrentDateTimeMicro());
+
     //paramServerClass := 'svc_oslindel_linux_p'; // ServerClass with whitelist entries
     //paramServerClass := 'svc_testclass';
     //paramServerClass := 'not_existsing_sc';
@@ -250,7 +247,15 @@ begin
     //paramHost := 'lsrvbl001*';
 
     WriteLn('Action on ', pathServerClassConf, ' in server class ', paramServerClass, ' for the ', paramListType,' to ', paramAction, ' ', paramHost);
+    log.WriteToFile(GetCurrentDateTimeMicro() + 
+        ' USERNAME=' + GetCurrentUser() +
+        ' SERVERCLASS=' + paramServerClass +
+        ' LISTTYPE=' + paramListType +
+        ' ACTION=' + paramAction +
+        ' HOSTNAME=' + paramHost);
 
-    //ProcessConfig(pathServerClassConf);
+    ProcessConfig(pathServerClassConf);
+
+    log.CloseFile();
     ProgDone();
 end. // of program ServerClassModifier

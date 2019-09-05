@@ -62,7 +62,9 @@ end; // of function GetPathServerClassConf
 
 procedure ProcessConfig(fnConf: AnsiString);
 //
-//  Process the original config file and 
+//  Process the original config file: 
+//  1) Copy the original file to a backup.
+//  2) Read the backup file and write modifictions to the orginal name.
 //
 var
     tfConf: TextFile;

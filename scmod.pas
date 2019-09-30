@@ -15,13 +15,10 @@ uses
     Crt,
     Dos,
     DateUtils,
+    UBuild,
     UTextFile,
     USupLib,
     SysUtils;
-
-
-const  
-    VERSION = '0.6';
 
 
 var
@@ -172,7 +169,7 @@ end; // of procedure ProcessConfig
 procedure ProgUsage();
 begin
     writeln();
-    writeln('scmod v', VERSION, ' - Splunk serverclass.conf modifier, add or delete hosts from a server class in the whitelist or blacklist section.');
+    writeln('scmod v', VERSION_MAJOR,'.', VERSION_MINOR, '.', BUILD, ' - Splunk serverclass.conf modifier, add or delete hosts from a server class in the whitelist or blacklist section.');
     writeln();
     writeln('Usage: scmod <serverclass> <listtype> <action> <hostname>');
     writeln('  <serverclass>        Name of the server class to modify');

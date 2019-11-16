@@ -29,7 +29,7 @@ var
     paramAction: AnsiString;
     paramHost: AnsiString;
     log: CTextFile;
-
+    pathMod: AnsiString;
 
 function GetPathServerClassConf(): AnsiString;
 //
@@ -166,12 +166,17 @@ begin
 end; // of procedure ProcessConfig
 
 
-procedure ProgUsage();
+procedure ProgTitle();
 begin
     writeln();
     writeln('scmod v', VERSION_MAJOR,'.', VERSION_MINOR, '.', BUILD, ' - Splunk serverclass.conf modifier, add or delete hosts from a server class in the whitelist or blacklist section.');
     writeln();
-    writeln('Usage: scmod <serverclass> <listtype> <action> <hostname>');
+end; // of procedure ProgTitle()
+
+
+procedure ProgUsage();
+begin
+    writeln('Usage: scmod <modfile>');
     writeln('  <serverclass>        Name of the server class to modify');
     writeln('  <listtype>           Select the "whitelist" or "blacklist"');
     writeln('  <action>             What action to perform on the serverclass, select "add" or "del"');
@@ -179,6 +184,39 @@ begin
     writeln();
     Halt; // Stop the program.
 end; // of procedure ProgUsage()
+
+
+procedure ProgInit();
+begin
+    ProgTitle();
+
+    if ParamCount <> 1 then
+        ProgUsage()
+    else
+        pathMod := ParamStr(1);
+
+    WriteLn('Mod file: ', pathMod);
+end; // of procedure ProgInit()
+
+
+procedure ProgRun();
+//
+// pathMod:     Path to the Modify file.
+//
+var
+    tfm:    CTextFile;
+begin
+    WriteLn('ProgRun(): Mod file ', pathMod);
+
+    tfm := CTextFile.Create(pathMod);
+    tfm.OpenFileRead();
+    Writeln('The status of ' + tfm.GetPath + ' is ' + BoolToStr(tfm.GetStatus, 'OPEN', 'CLOSED'));
+    repeat
+      WriteLn(IntToStr(tfm.GetCurrentLine()) + ': ' + tfm.ReadFromFile());
+    until tfm.GetEof();
+    tfm.CloseFile();
+
+end; // of procedure ProgRun()
 
 
 
@@ -189,6 +227,8 @@ begin
     WriteLn;
 end; // of procedure ProgDone()
 
+
+procedure ProgRunOld();
 begin
     Sleep(1001);
 
@@ -256,5 +296,11 @@ begin
     ProcessConfig(pathServerClassConf);
 
     log.CloseFile();
+end; // of procedure ProgRunOld()
+
+
+begin
+    ProgInit();
+    ProgRun();
     ProgDone();
 end. // of program ServerClassModifier

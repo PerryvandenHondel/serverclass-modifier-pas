@@ -204,7 +204,10 @@ procedure ProgRun();
 // pathMod:     Path to the Modify file.
 //
 var
-    tfm:    CTextFile;
+    tfm: CTextFile;
+    line: AnsiString;
+    s: TStringArray;
+    x : integer;
 begin
     WriteLn('ProgRun(): Mod file ', pathMod);
 
@@ -212,7 +215,18 @@ begin
     tfm.OpenFileRead();
     Writeln('The status of ' + tfm.GetPath + ' is ' + BoolToStr(tfm.GetStatus, 'OPEN', 'CLOSED'));
     repeat
-      WriteLn(IntToStr(tfm.GetCurrentLine()) + ': ' + tfm.ReadFromFile());
+        line := tfm.ReadFromFile();
+        WriteLn(IntToStr(tfm.GetCurrentLine()) + ': ' + line);
+        
+        SetLength(s, 0);
+        s := SplitString(line, ';');
+        for x := 0 to High(s) do 
+        begin
+            // For every part of the array print it
+            WriteLn(#9#9, IntToStr(x) + ': ' + s[x]);
+        end;
+        SetLength(s, 0); // Set the array to 0 after use.
+      
     until tfm.GetEof();
     tfm.CloseFile();
 

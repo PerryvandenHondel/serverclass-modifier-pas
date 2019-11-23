@@ -174,12 +174,31 @@ begin
 end; // of procedure ProgTitle()
 
 
-procedure ProgReadConfig()
+{procedure ProgReadConfig()
 var
     pathServerClass := 
 begin
 
 end; // of procedure ProgReadConfig
+}
+
+procedure MakeBackupServerClass();
+//
+// Read the backup directory location.
+// Read the serverclass.conf location.
+// Make a backup of the serverclass to the backup directory.
+//
+var
+    directoryBackup: AnsiString;
+    pathServerClass: AnsiString;
+begin
+    directoryBackup := ReadSettingKey(ParamStr(0) + '.conf', 'Settings', 'DirBackup');
+    pathServerClass := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'PathServerClass');
+
+    WriteLn('directoryBackup=', directoryBackup);
+    WriteLn('pathServerClass=', pathServerClass);
+end;
+
 
 procedure ProgUsage();
 begin
@@ -216,6 +235,8 @@ var
     s: TStringArray;
     x : integer;
 begin
+    MakeBackupServerClass();
+
     WriteLn('ProgRun(): Mod file ', pathMod);
 
     tfm := CTextFile.Create(pathMod);

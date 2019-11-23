@@ -174,6 +174,13 @@ begin
 end; // of procedure ProgTitle()
 
 
+procedure ProgReadConfig()
+var
+    pathServerClass := 
+begin
+
+end; // of procedure ProgReadConfig
+
 procedure ProgUsage();
 begin
     writeln('Usage: scmod <modfile>');

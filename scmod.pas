@@ -29,7 +29,9 @@ var
     paramAction: AnsiString;
     paramHost: AnsiString;
     log: CTextFile;
-    pathMod: AnsiString;
+    pathModify: AnsiString;         // Path to the file with the attributes to modify.
+
+
 
 function GetPathServerClassConf(): AnsiString;
 //
@@ -166,6 +168,31 @@ begin
 end; // of procedure ProcessConfig
 
 
+
+procedure LogWrite(t: AnsiString);
+begin
+    log.WriteToFile(GetCurrentDateTimeMicro + ' ' + t);
+end; // of procedure LogWrite()
+
+
+procedure LogOpen();
+begin
+    pathLog := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'PathLog');
+    WriteLn('pathLog=', pathLog);
+
+    log := CTextFile.Create(pathLog);
+	log.OpenFileWrite();
+    LogWrite('Started');
+end; // of procedure LogOpen()
+
+
+procedure LogClose();
+begin
+    LogWrite('Ended');
+    log.CloseFile();
+end; // of procedure LogClose()
+
+
 procedure ProgTitle();
 begin
     writeln();
@@ -202,14 +229,14 @@ end;
 
 procedure ProgUsage();
 begin
-    writeln('Usage: scmod <modfile>');
-    writeln('  <serverclass>        Name of the server class to modify');
-    writeln('  <listtype>           Select the "whitelist" or "blacklist"');
-    writeln('  <action>             What action to perform on the serverclass, select "add" or "del"');
-    writeln('  <hostname>           Name of host to add or delete from the server class');
+    writeln('Usage: scmod <modifyfile>');
+    writeln('  <modifyfile>     File with the modify information.');
     writeln();
     Halt; // Stop the program.
 end; // of procedure ProgUsage()
+
+
+
 
 
 procedure ProgInit();
@@ -219,15 +246,18 @@ begin
     if ParamCount <> 1 then
         ProgUsage()
     else
-        pathMod := ParamStr(1);
+        pathModify := ParamStr(1);
 
-    WriteLn('Mod file: ', pathMod);
+    WriteLn('Mod file: ', pathModify);
+
+    LogOpen();
+
 end; // of procedure ProgInit()
 
 
 procedure ProgRun();
 //
-// pathMod:     Path to the Modify file.
+// pathModify:     Path to the Modify file.
 //
 var
     tfm: CTextFile;
@@ -235,11 +265,13 @@ var
     s: TStringArray;
     x : integer;
 begin
-    MakeBackupServerClass();
+    
 
-    WriteLn('ProgRun(): Mod file ', pathMod);
 
-    tfm := CTextFile.Create(pathMod);
+
+    WriteLn('ProgRun(): Mod file ', pathModify);
+
+    tfm := CTextFile.Create(pathModify);
     tfm.OpenFileRead();
     Writeln('The status of ' + tfm.GetPath + ' is ' + BoolToStr(tfm.GetStatus, 'OPEN', 'CLOSED'));
     repeat
@@ -264,6 +296,8 @@ end; // of procedure ProgRun()
 
 procedure ProgDone();
 begin
+    LogClose();
+    
     WriteLn;
     Writeln('splunk reload deploy-server -class ' + paramServerClass);
     WriteLn;

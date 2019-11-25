@@ -4,7 +4,7 @@
 ## Use the set-build tool to increase the build number.
 ## Create UBuild.pas
 ##
-~/development/pascal/set-build/set-build serverclass-modifier
+~/development/pascal/set-build/set-build scmod
 
 
 ##

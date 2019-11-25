@@ -9,3 +9,40 @@ Ended
 2019-11-25 11:06:32.060 Started
 2019-11-25 11:06:32.060 Create backup of /opt/splunk/etc/system/local/serverclass.conf to backup file /tmp/backup-serverclass/serverclass.conf.1574679993.scmod
 2019-11-25 11:06:32.060 Ended
+2019-11-25 11:25:50.030 Started
+2019-11-25 11:25:50.030 Created the directory for backups /tmp/backup-serverclass
+2019-11-25 11:25:50.030 Create backup of /home/perry/development/pascal/serverclass-modifier-pas/serverclass.conf to backup file /tmp/backup-serverclass/serverclass.conf.1574681150.scmod
+2019-11-25 11:25:50.030 Ended
+2019-11-25 12:20:25.087 Started
+2019-11-25 12:20:25.087 Created the directory for backups /tmp/backup-serverclass
+2019-11-25 12:20:25.087 Create backup of /home/perry/development/pascal/serverclass-modifier-pas/serverclass.conf to backup file /tmp/backup-serverclass/serverclass.conf.1574684426.scmod
+2019-11-25 12:20:25.087 Ended
+2019-11-25 12:49:38.003 Started
+2019-11-25 12:49:38.003 Created the directory for backups /tmp/backup-serverclass
+2019-11-25 12:49:38.003 Create backup of  to backup file /tmp/backup-serverclass/serverclass.conf.1574686178.scmod
+2019-11-25 12:49:38.003 Ended
+2019-11-25 13:51:03.004 Started
+2019-11-25 13:51:03.004 Created the directory for backups /tmp/backup-serverclass
+2019-11-25 13:51:03.004 Create backup of  to backup file /tmp/backup-serverclass/serverclass.conf.1574689863.scmod
+2019-11-25 13:51:03.004 Ended
+2019-11-25 13:52:04.021 Started
+2019-11-25 13:52:04.021 Created the directory for backups /tmp/backup-serverclass
+2019-11-25 13:52:04.021 Create backup of  to backup file /tmp/backup-serverclass/serverclass.conf.1574689924.scmod
+2019-11-25 13:52:04.021 USERNAME=perry SERVERCLASS=svcc_ami_p LISTTYPE=whitelist ACTION=add HOSTNAME=lsrvtest01*
+2019-11-25 13:52:04.022 USERNAME=perry SERVERCLASS=svcc_ami_p LISTTYPE=whitelist ACTION=add HOSTNAME=lsrvtest02*
+2019-11-25 13:52:04.024 USERNAME=perry SERVERCLASS=svcc_ami_p LISTTYPE=whitelist ACTION=add HOSTNAME=lsrvtest03*
+2019-11-25 13:52:04.025 Ended
+2019-11-25 13:52:59.021 Started
+2019-11-25 13:52:59.021 Created the directory for backups /tmp/backup-serverclass
+2019-11-25 13:52:59.021 Create backup of  to backup file /tmp/backup-serverclass/serverclass.conf.1574689979.scmod
+2019-11-25 13:52:59.021 USERNAME=perry SERVERCLASS=sc_testmod LISTTYPE=whitelist ACTION=add HOSTNAME=lsrvtest01*
+2019-11-25 13:52:59.023 USERNAME=perry SERVERCLASS=sc_testmod LISTTYPE=whitelist ACTION=add HOSTNAME=lsrvtest02*
+2019-11-25 13:52:59.024 USERNAME=perry SERVERCLASS=sc_testmod LISTTYPE=whitelist ACTION=add HOSTNAME=lsrvtest03*
+2019-11-25 13:52:59.025 Ended
+2019-11-25 14:24:28.066 Started
+2019-11-25 14:24:28.066 Created the directory for backups /tmp/backup-serverclass
+2019-11-25 14:24:28.066 Create backup of  to backup file /tmp/backup-serverclass/serverclass.conf.1574691869.scmod
+2019-11-25 14:24:28.066 USERNAME=perry SERVERCLASS=sc_testmod LISTTYPE=whitelist ACTION=del HOSTNAME=lsrvtest01*
+2019-11-25 14:24:28.067 USERNAME=perry SERVERCLASS=sc_testmod LISTTYPE=whitelist ACTION=del HOSTNAME=lsrvtest02*
+2019-11-25 14:24:28.067 USERNAME=perry SERVERCLASS=sc_testmod LISTTYPE=whitelist ACTION=del HOSTNAME=lsrvtest03*
+2019-11-25 14:24:28.068 Ended

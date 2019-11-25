@@ -24,12 +24,9 @@ uses
 var
     pathServerClassConf: AnsiString;
     pathLog: AnsiString;
-    paramServerClass: AnsiString;
-    paramListType: AnsiString;
-    paramAction: AnsiString;
-    paramHost: AnsiString;
     log: CTextFile;
     pathModify: AnsiString;         // Path to the file with the attributes to modify.
+    pathServerClass: AnsiString;
 
 
 
@@ -59,116 +56,6 @@ begin
 end; // of function GetPathServerClassConf
 
 
-procedure ProcessConfig(fnConf: AnsiString);
-//
-//  Process the original config file: 
-//  1) Copy the original file to a backup.
-//  2) Read the backup file and write modifictions to the orginal name.
-//
-var
-    tfConf: TextFile;
-    tfBackup: TextFile;
-
-    l: Integer;
-    fnBackup: AnsiString;
-    bufferRead: AnsiString;
-    bufferWrite: AnsiString;
-    inServerClass: Boolean;
-    inListType: Boolean;
-    listHighest: Integer;
-    listCurrent: Integer;
-    skipLine: Boolean;
-begin
-    // Create a new file name as backup. serverclass.conf --> serverclass.conf.1234567890.scmod
-    fnBackup := fnConf + '.' + IntToStr(DateTimeToUnix(Now())) + '.scmod';
-    CopyTheFile(fnConf, fnBackup);
-
-    // Open the back file and write the modifications into the originial .conf file.
-    AssignFile(tfBackup, fnBackup);
-    Reset(tfBackup);
-
-    // Open the config file to write to.
-    AssignFile(tfConf, fnConf);
-    ReWrite(tfConf);
-    bufferWrite := '';
-
-
-    l := 0;
-    inServerClass := false;
-    inListType := false;
-    skipLine := false;
-    listHighest := -1; // Higest found number of a list type; can be 0 for first entry. 'whitelist.0 = hostname'
-    listCurrent := -1;
-   
-    while not eof(tfBackup) do
-    begin
-        ReadLn(tfBackup, bufferRead);
-        Inc(l);
-
-        if Pos('[serverClass:' + paramServerClass + ']', bufferRead) > 0 then
-        begin
-            // Found the server class
-            inServerClass := true;
-        end; // of if 
-
-         if (inServerClass = true) and (Pos(paramListType, bufferRead) > 0) then
-        begin
-            // We have entries for the list type.
-            inListType := true;
-            
-            // Get the current number of the listtype: whitelist.x = hostname
-            listCurrent := StrToInt(Trim(Copy(bufferRead, Pos('.', bufferRead) + 1, (Pos(' =', bufferRead) - 2) - Pos('.', bufferRead) + 1)));
-            if listCurrent > listHighest then 
-                listHighest := listCurrent;
-        end; // of if
-
-        if (inServerClass = true) and (Length(bufferRead) = 0) then
-        begin
-            // You are in the serverclass and encounter a empty line
-            // Stepping out of the serverclass part
-            inServerClass := false;
-            inListType := false;
-            
-            if UpperCase(paramAction) = 'ADD' then
-            begin
-                // Add a new system to the list type.
-                bufferWrite := paramListType + '.' + IntToStr(listHighest + 1) + ' = ' + paramHost;
-                WriteLn('Adding new line to ', fnConf, ': ', bufferWrite);
-                WriteLn(tfConf, bufferWrite);
-
-            end; // of if
-
-            listHighest := 0; // Number of list will be 0 for the first
-        end; // of if 
-
-        if (inServerClass = true) and (inListType = true) and (Pos(paramHost, bufferRead) > 0) and (UpperCase(paramAction) = 'DEL') then
-        begin
-            // When in the serverclass and the host is found and you need to delete it.
-            WriteLn('Delete this host: ', paramHost);
-            skipLine := true;
-        end;
-        
-        //WriteLn(l:4, ': INSC=', inServerClass:5, ' INLT=', inListType:5, ' LH=', listHighest:3, ' > ', bufferRead);
-        bufferWrite := bufferRead;
-        if skipLine = true then
-        begin 
-            
-            skipLine := false; // and back to false for the next line.
-        end
-        else
-            WriteLn(tfConf, bufferWrite);
-        begin
-        
-        end;
-    end; // of while
-
-    CloseFile(tfConf);
-
-    CloseFile(tfBackup);
-end; // of procedure ProcessConfig
-
-
-
 procedure LogWrite(t: AnsiString);
 begin
     log.WriteToFile(GetCurrentDateTimeMicro + ' ' + t);
@@ -190,7 +77,122 @@ procedure LogClose();
 begin
     LogWrite('Ended');
     log.CloseFile();
-end; // of procedure LogClose()
+end; // of procedure LogClose()s
+
+
+procedure ProcessServerClass(pathServerClass: AnsiString; serverClass: AnsiString; listType: AnsiString; action: AnsiString; hostName: AnsiString);
+//
+//  Process the original config file: 
+//  1) Copy the original file to a work file, this is what we read.
+//  2) Read the backup file and write modifictions to the orginal name.
+//
+var
+    tfServerClass: TextFile;
+    tfWork: TextFile;
+
+    l: Integer;
+    pathWork: AnsiString;
+    bufferRead: AnsiString;
+    bufferWrite: AnsiString;
+    inServerClass: Boolean;
+    inListType: Boolean;
+    listHighest: Integer;
+    listCurrent: Integer;
+    skipLine: Boolean;
+begin
+    Writeln('ProcessServerClass()' + pathServerClass + '  ' + serverClass + '  ' + listType + '  ' + action + '  ' + hostName);
+
+    LogWrite('USERNAME=' + GetCurrentUser() +
+        ' SERVERCLASS=' + serverClass +
+        ' LISTTYPE=' + listType +
+        ' ACTION=' + action +
+        ' HOSTNAME=' + hostName);
+
+    // Create a new file name as backup. serverclass.conf --> serverclass.conf.$WORK
+    pathWork := pathServerClass + '.$WORK';
+    CopyTheFile(pathServerClass, pathWork);
+
+    // Open the back file and write the modifications into the originial .conf file.
+    AssignFile(tfWork, pathWork);
+    Reset(tfWork);
+
+    // Open the config file to write to.
+    AssignFile(tfServerClass, pathServerClass);
+    ReWrite(tfServerClass);
+    bufferWrite := '';
+
+    l := 0;
+    inServerClass := false;
+    inListType := false;
+    skipLine := false;
+    listHighest := -1; // Higest found number of a list type; can be 0 for first entry. 'whitelist.0 = hostname'
+    listCurrent := -1;
+   
+    while not eof(tfWork) do
+    begin
+        ReadLn(tfWork, bufferRead);
+        Inc(l);
+
+        if Pos('[serverClass:' + serverClass + ']', bufferRead) > 0 then
+        begin
+            // Found the server class
+            inServerClass := true;
+        end; // of if 
+
+         if (inServerClass = true) and (Pos(listType, bufferRead) > 0) then
+        begin
+            // We have entries for the list type.
+            inListType := true;
+            
+            // Get the current number of the listtype: whitelist.x = hostname
+            listCurrent := StrToInt(Trim(Copy(bufferRead, Pos('.', bufferRead) + 1, (Pos(' =', bufferRead) - 2) - Pos('.', bufferRead) + 1)));
+            if listCurrent > listHighest then 
+                listHighest := listCurrent;
+        end; // of if
+
+        if (inServerClass = true) and (Length(bufferRead) = 0) then
+        begin
+            // You are in the serverclass and encounter a empty line
+            // Stepping out of the serverclass part
+            inServerClass := false;
+            inListType := false;
+            
+            if UpperCase(action) = 'ADD' then
+            begin
+                // Add a new system to the list type.
+                bufferWrite := listType + '.' + IntToStr(listHighest + 1) + ' = ' + hostName;
+                WriteLn('Adding new line to ', pathServerClass, ': ', bufferWrite);
+                WriteLn(tfServerClass, bufferWrite);
+
+            end; // of if
+
+            listHighest := 0; // Number of list will be 0 for the first
+        end; // of if 
+
+        if (inServerClass = true) and (inListType = true) and (Pos(hostName, bufferRead) > 0) and (UpperCase(action) = 'DEL') then
+        begin
+            // When in the serverclass and the host is found and you need to delete it.
+            WriteLn('Delete this host: ', hostName);
+            skipLine := true;
+        end;
+        
+        //WriteLn(l:4, ': INSC=', inServerClass:5, ' INLT=', inListType:5, ' LH=', listHighest:3, ' > ', bufferRead);
+        bufferWrite := bufferRead;
+        if skipLine = true then
+        begin 
+            skipLine := false; // and back to false for the next line.
+        end
+        else
+            WriteLn(tfServerClass, bufferWrite);
+        begin
+        
+        end;
+    end; // of while
+
+    CloseFile(tfServerClass);
+
+    CloseFile(tfWork);
+end; // of procedure ProcessServerClass
 
 
 procedure ProgTitle();
@@ -209,6 +211,7 @@ begin
 end; // of procedure ProgReadConfig
 }
 
+
 procedure MakeBackupServerClass();
 //
 // Read the backup directory location for the config file.
@@ -217,19 +220,22 @@ procedure MakeBackupServerClass();
 //
 var
     directoryBackup: AnsiString;
-    pathServerClass: AnsiString;
     pathServerClassBackup: AnsiString;
 begin
     directoryBackup := ReadSettingKey(ParamStr(0) + '.conf', 'Settings', 'DirBackup');
-    pathServerClass := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'PathServerClass');
 
     WriteLn('directoryBackup=', directoryBackup);
     WriteLn('pathServerClass=', pathServerClass);
+
+    if ForceDirectories(directoryBackup) = true then
+        LogWrite('Created the directory for backups ' + directoryBackup);
 
     pathServerClassBackup := directoryBackup + '/serverclass.conf.' + IntToStr(DateTimeToUnix(Now())) + '.scmod';
 
     Writeln('Create backup of the Server Class:', pathServerClass + '  >>  ', pathServerClassBackup);
     LogWrite('Create backup of ' + pathServerClass + ' to backup file ' + pathServerClassBackup);
+    
+    CopyTheFile(pathServerClassConf, pathServerClassBackup);
 end; // of procedure MakeBackupServerClass() 
 
 
@@ -238,11 +244,17 @@ begin
     writeln('Usage: scmod <modifyfile>');
     writeln('  <modifyfile>     File with the modify information.');
     writeln();
+    writeln('The modifyfile is a CSV formarted file.');
+    writeln('Format:');
+    writeln('<serverclass>;<listtype>;<action>;<hostname>');
+    writeln(#9, 'serverclass = the name of the server class to modify');
+    writeln(#9, 'listtype = whitelist or blacklist');
+    writeln(#9, 'action = add or del');
+    writeln(#9, 'hostname = The name of the host, use wildcard at the end');
+    Writeln();
+    
     Halt; // Stop the program.
 end; // of procedure ProgUsage()
-
-
-
 
 
 procedure ProgInit();
@@ -258,6 +270,7 @@ begin
 
     LogOpen();
 
+    pathServerClassConf := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'PathServerClass');
 end; // of procedure ProgInit()
 
 
@@ -269,11 +282,15 @@ var
     tfm: CTextFile;
     line: AnsiString;
     s: TStringArray;
-    x : integer;
+    serverClass: AnsiString;
+    listType: AnsiString;
+    action: AnsiString;
+    hostName: AnsiString;
 begin
     MakeBackupServerClass();
 
 
+    WriteLn(pathModify);
     tfm := CTextFile.Create(pathModify);
     tfm.OpenFileRead();
     Writeln('The status of ' + tfm.GetPath + ' is ' + BoolToStr(tfm.GetStatus, 'OPEN', 'CLOSED'));
@@ -283,11 +300,14 @@ begin
         
         SetLength(s, 0);
         s := SplitString(line, ';');
-        for x := 0 to High(s) do 
-        begin
-            // For every part of the array print it
-            WriteLn(#9#9, IntToStr(x) + ': ' + s[x]);
-        end;
+
+        serverClass := s[0];
+        listType := s[1];
+        action := s[2];
+        hostName := s[3];
+
+        ProcessServerClass(pathServerClassConf, serverClass, listType, action, hostName);
+        
         SetLength(s, 0); // Set the array to 0 after use.
       
     until tfm.GetEof();
@@ -302,11 +322,11 @@ begin
     LogClose();
     
     WriteLn;
-    Writeln('splunk reload deploy-server -class ' + paramServerClass);
+    Writeln('splunk reload deploy-server -class '); // + serverClass);
     WriteLn;
 end; // of procedure ProgDone()
 
-
+{
 procedure ProgRunOld();
 begin
     Sleep(1001);
@@ -315,11 +335,11 @@ begin
         ProgUsage();
 
     // Get the parameters from the command line.
-    paramServerClass := ParamStr(1);
-    paramListType := ParamStr(2);
-    paramAction := ParamStr(3);
-    paramHost := ParamStr(4);
-{
+    //paramServerClass := ParamStr(1);
+    //paramListType := ParamStr(2);
+    //paramAction := ParamStr(3);
+    //sparamHost := ParamStr(4);
+
     WriteLn('paramServerClass=[', paramServerClass, ']');
     WriteLn('paramListType=[', paramListType, ']');
     WriteLn('paramAction=[', paramAction, ']');
@@ -340,7 +360,7 @@ begin
         WriteLn('ERROR: Option action is not "add" or "del".');
         ProgUsage();
     end; // of if paramListType
-}
+
 
 
     //pathServerClassConf := GetPathServerClassConf();
@@ -364,7 +384,7 @@ begin
     //paramAction := 'add';
     //paramHost := 'lsrvbl001*';
 
-    WriteLn('Action on ', pathServerClassConf, ' in server class ', paramServerClass, ' for the ', paramListType,' to ', paramAction, ' ', paramHost);
+    //WriteLn('Action on ', pathServerClassConf, ' in server class ', paramServerClass, ' for the ', paramListType,' to ', paramAction, ' ', paramHost);
     log.WriteToFile(GetCurrentDateTimeMicro() + 
         ' USERNAME=' + GetCurrentUser() +
         ' SERVERCLASS=' + paramServerClass +
@@ -372,11 +392,11 @@ begin
         ' ACTION=' + paramAction +
         ' HOSTNAME=' + paramHost);
 
-    ProcessConfig(pathServerClassConf);
+   //ProcessServerClass(pathServerClassConf);
 
     log.CloseFile();
 end; // of procedure ProgRunOld()
-
+}
 
 begin
     ProgInit();

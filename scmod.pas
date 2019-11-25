@@ -81,8 +81,28 @@ procedure LogClose();
 begin
     LogWrite('Ended');
     log.CloseFile();
-end; // of procedure LogClose()s
+end; // of procedure LogClose()
 
+
+function FoundHostInClass(pathServerClass: AnsiString; hostName: AnsiString): Boolean;
+var
+    r: Boolean;
+    tf: CTextFile;
+    buffer: AnsiString;
+begin
+    r := false;
+
+    tf := CTextFile.Create(pathLog);
+	tf.OpenFileRead();
+    
+    repeat
+        buffer := tf.ReadFromFile();
+        WriteLn(IntToStr(tf.GetCurrentLine()) + ': ' + buffer);
+    until tf.GetEof();
+
+    tf.CloseFile();
+    FoundHostInClass := r;
+end; 
 
 procedure ProcessServerClass(pathServerClass: AnsiString; serverClass: AnsiString; listType: AnsiString; action: AnsiString; hostName: AnsiString);
 //
@@ -303,6 +323,13 @@ begin
 end; // of procedure ProgInit()
 
 
+procedure ProgTest();
+begin
+    WriteLn(FoundHostInClass(pathServerClassConf, 'lsrvtest01*'));
+    WriteLn(FoundHostInClass(pathServerClassConf, 'nottobefound*'));
+end; // of procedure ProgTest()
+
+
 procedure ProgRun();
 //
 // pathModify:     Path to the Modify file.
@@ -429,6 +456,7 @@ end; // of procedure ProgRunOld()
 
 begin
     ProgInit();
-    ProgRun();
+    //ProgRun();
+    ProgTest();
     ProgDone();
 end. // of program ServerClassModifier

@@ -21,13 +21,17 @@ uses
     SysUtils;
 
 
+const
+    TAB = #9;
+
 var
     pathServerClassConf: AnsiString;
     pathLog: AnsiString;
     log: CTextFile;
     pathModify: AnsiString;         // Path to the file with the attributes to modify.
     pathServerClass: AnsiString;
-
+    reference: AnsiString;          // Reference; Under what reference the action is executed; ADO PBI (ADOP), ADO Task (ADOT), Change number
+    dirTemp: AnsiString;            // Temp directory to store the temp work file.
 
 
 function GetPathServerClassConf(): AnsiString;
@@ -106,7 +110,8 @@ begin
         ' SERVERCLASS=' + serverClass +
         ' LISTTYPE=' + listType +
         ' ACTION=' + action +
-        ' HOSTNAME=' + hostName);
+        ' HOSTNAME=' + hostName +
+        ' REFERENCE=' + reference);
 
     // Create a new file name as backup. serverclass.conf --> serverclass.conf.$WORK
     pathWork := pathServerClass + '.$WORK';
@@ -239,6 +244,25 @@ begin
 end; // of procedure MakeBackupServerClass() 
 
 
+function GetReferenceFromPath(path: AnsiString): AnsiString;
+//
+// Returns the reference from the path of the modify file.
+//
+//  path: /dir/dir/dir/<reference>.csv
+//
+// Returns: reference path of the file.
+//
+var
+    r: AnsiString;
+begin
+    r := ExtractFileName(path); // From Sysutils
+    r := LeftStr(r, Pos('.', r) - 1);
+
+    Writeln('GetReferenceFromPath()=', r);
+    GetReferenceFromPath := r;
+end; // of function GetReferenceFromPath
+
+
 procedure ProgUsage();
 begin
     writeln('Usage: scmod <modifyfile>');
@@ -247,10 +271,10 @@ begin
     writeln('The modifyfile is a CSV formarted file.');
     writeln('Format:');
     writeln('<serverclass>;<listtype>;<action>;<hostname>');
-    writeln(#9, 'serverclass = the name of the server class to modify');
-    writeln(#9, 'listtype = whitelist or blacklist');
-    writeln(#9, 'action = add or del');
-    writeln(#9, 'hostname = The name of the host, use wildcard at the end');
+    writeln(TAB, 'serverclass = the name of the server class to modify');
+    writeln(TAB, 'listtype = whitelist or blacklist');
+    writeln(TAB, 'action = add or del');
+    writeln(TAB, 'hostname = The name of the host, use wildcard at the end');
     Writeln();
     
     Halt; // Stop the program.
@@ -268,9 +292,14 @@ begin
 
     WriteLn('Mod file: ', pathModify);
 
+    reference := GetReferenceFromPath(pathModify);
+
     LogOpen();
 
     pathServerClassConf := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'PathServerClass');
+    dirTemp := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'dirTemp');
+
+    Writeln('Using temp directory: ', dirTemp);
 end; // of procedure ProgInit()
 
 

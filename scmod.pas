@@ -92,7 +92,7 @@ var
 begin
     r := false;
 
-    tf := CTextFile.Create(pathLog);
+    tf := CTextFile.Create(pathServerClass);
 	tf.OpenFileRead();
     
     repeat
@@ -325,6 +325,7 @@ end; // of procedure ProgInit()
 
 procedure ProgTest();
 begin
+
     WriteLn(FoundHostInClass(pathServerClassConf, 'lsrvtest01*'));
     WriteLn(FoundHostInClass(pathServerClassConf, 'nottobefound*'));
 end; // of procedure ProgTest()

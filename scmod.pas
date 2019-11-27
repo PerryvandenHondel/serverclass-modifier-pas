@@ -84,24 +84,45 @@ begin
 end; // of procedure LogClose()
 
 
-function FoundHostInClass(pathServerClass: AnsiString; hostName: AnsiString): Boolean;
+function FoundHostInClass(pathServerClassConf: AnsiString; findInServerClass: AnsiString; hostName: AnsiString): Boolean;
+//
+//  pathServerClassConf:    Path to the server class
+//  findInServerClass:      Find the hostname in this server class
+//
+//
 var
-    r: Boolean;
+    isFound: Boolean;
+    inServerClass: Boolean;
     tf: CTextFile;
     buffer: AnsiString;
 begin
-    r := false;
+    isFound := false;
+    inServerClass := false;
 
-    tf := CTextFile.Create(pathServerClass);
+    WriteLn('FoundHostInClass(): ', findInServerClass, ' --> ', hostName);
+
+    tf := CTextFile.Create(pathServerClassConf);
 	tf.OpenFileRead();
     
     repeat
         buffer := tf.ReadFromFile();
         WriteLn(IntToStr(tf.GetCurrentLine()) + ': ' + buffer);
+
+        if Pos('[serverClass:' + findInServerClass + ']', buffer) > 0 then
+        begin
+            inServerClass := true;
+            writeln('Server class found');
+        end; // of if Pos
+
+        if Pos(hostName, buffer) > 0 then
+        begin
+            isFound := true;
+            break; // stop the loop, we found what we need.
+        end; // of if
     until tf.GetEof();
 
     tf.CloseFile();
-    FoundHostInClass := r;
+    FoundHostInClass := isFound;
 end; 
 
 procedure ProcessServerClass(pathServerClass: AnsiString; serverClass: AnsiString; listType: AnsiString; action: AnsiString; hostName: AnsiString);
@@ -306,11 +327,10 @@ begin
     ProgTitle();
 
     if ParamCount <> 1 then
-        ProgUsage()
-    else
-        pathModify := ParamStr(1);
-
-    WriteLn('Mod file: ', pathModify);
+        ProgUsage(); // Show program usage, close after showing usage.
+    
+    // We have a param string; must be the path to the Modigy file.
+    pathModify := ParamStr(1);
 
     reference := GetReferenceFromPath(pathModify);
 
@@ -319,15 +339,18 @@ begin
     pathServerClassConf := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'PathServerClass');
     dirTemp := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'dirTemp');
 
-    Writeln('Using temp directory: ', dirTemp);
+    Writeln('Server class location: ', pathServerClassConf);
+    Writeln('Temp directory: ', dirTemp);
+    Writeln('Modify file: ', pathModify);
+
 end; // of procedure ProgInit()
 
 
 procedure ProgTest();
 begin
 
-    WriteLn(FoundHostInClass(pathServerClassConf, 'lsrvtest01*'));
-    WriteLn(FoundHostInClass(pathServerClassConf, 'nottobefound*'));
+    WriteLn(FoundHostInClass('serverclass.test', 'sc_testserverclasss', 'servertobefound*'));
+    //WriteLn(FoundHostInClass(pathServerClassConf, 'nottobefound*'));
 end; // of procedure ProgTest()
 
 

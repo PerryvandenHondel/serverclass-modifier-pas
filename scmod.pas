@@ -84,7 +84,7 @@ begin
 end; // of procedure LogClose()
 
 
-function FoundHostInClass(pathServerClassConf: AnsiString; findInServerClass: AnsiString; hostName: AnsiString): Boolean;
+function FoundHostInClass(pathServerClassConf: AnsiString; findInServerClass: AnsiString; findInType: AnsiString; hostName: AnsiString): Boolean;
 //
 //  pathServerClassConf:    Path to the server class
 //  findInServerClass:      Find the hostname in this server class
@@ -93,11 +93,13 @@ function FoundHostInClass(pathServerClassConf: AnsiString; findInServerClass: An
 var
     isFound: Boolean;
     inServerClass: Boolean;
+    inType: Boolean;
     tf: CTextFile;
     buffer: AnsiString;
 begin
     isFound := false;
     inServerClass := false;
+    inType := false;
 
     WriteLn('FoundHostInClass(): ', findInServerClass, ' --> ', hostName);
 
@@ -106,19 +108,32 @@ begin
     
     repeat
         buffer := tf.ReadFromFile();
-        WriteLn(IntToStr(tf.GetCurrentLine()) + ': ' + buffer);
-
+        
         if Pos('[serverClass:' + findInServerClass + ']', buffer) > 0 then
         begin
             inServerClass := true;
-            writeln('Server class found');
         end; // of if Pos
+
+        if Pos(findInType, buffer) > 0 then
+        begin
+            inType := true;
+        end; // of if
+
+        if (inServerClass = true) and (Length(buffer) = 0) then
+        begin
+            // You are in the server class and and empty line is found. Must be the end of the server class.
+            inServerClass := false;
+        end; // of if 
 
         if Pos(hostName, buffer) > 0 then
         begin
             isFound := true;
-            break; // stop the loop, we found what we need.
         end; // of if
+
+        
+
+        WriteLn(IntToStr(tf.GetCurrentLine()),':', TAB, 'SERVERCLASS=', inServerClass, TAB, 'TYPE=', inType, TAB, 'FOUND=', isFound, TAB, buffer);
+
     until tf.GetEof();
 
     tf.CloseFile();
@@ -349,7 +364,7 @@ end; // of procedure ProgInit()
 procedure ProgTest();
 begin
 
-    WriteLn(FoundHostInClass('serverclass.test', 'sc_testserverclasss', 'servertobefound*'));
+    WriteLn(FoundHostInClass('serverclass.test', 'sc_testserverclass', 'whitelist', 'servertobefound*'));
     //WriteLn(FoundHostInClass(pathServerClassConf, 'nottobefound*'));
 end; // of procedure ProgTest()
 

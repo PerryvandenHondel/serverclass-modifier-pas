@@ -1,13 +1,27 @@
 program ServerClassModifier;
-//
-// Modify the Splunk serverclass.conf
-//
-// Version 0.6
-//
+{
+    Server Class Modifier for Splunk
+    
+    Modify the Splunk serverclass.conf
+
+    Version 0.6
+
+    Reads the csv file with modify instructions.
+
+    serverclass;listtype;action;hostname
+
+    Example:
+
+    sc_testmod;whitelist;add;lsrvtest01*
+    sc_testmod;whitelist;add;lsrvtest02*
+    sc_testmod;whitelist;add;lsrvtest03*
+}
+
 
 
 {$mode objfpc}
 {$H+}
+
 
 
 uses
@@ -21,8 +35,12 @@ uses
     SysUtils;
 
 
+
 const
     TAB = #9;
+    DEBUG_MODE_ON = true;
+
+
 
 var
     pathServerClassConf: AnsiString;
@@ -34,11 +52,19 @@ var
     dirTemp: AnsiString;            // Temp directory to store the temp work file.
 
 
+
+procedure DebugWriteLn(line: AnsiString);
+begin
+    if DEBUG_MODE_ON = true then
+        WriteLn(line);
+end;
+
+
 function GetPathServerClassConf(): AnsiString;
-//
-// Get the path to the serverclass.conf file.
-// Location is stored in scmod.conf
-//
+{
+    Get the path to the serverclass.conf file.
+    Location is stored in scmod.conf
+}
 var
     path: AnsiString;
     r: AnsiString;
@@ -58,6 +84,7 @@ begin
 
     GetPathServerClassConf := r;
 end; // of function GetPathServerClassConf
+
 
 
 procedure LogWrite(t: AnsiString);
@@ -84,7 +111,7 @@ begin
 end; // of procedure LogClose()
 
 
-function FoundHostInClass(pathServerClassConf: AnsiString; findInServerClass: AnsiString; findInType: AnsiString; hostName: AnsiString): Boolean;
+function FindHostInClass(pathServerClassConf: AnsiString; findInServerClass: AnsiString; findInType: AnsiString; hostName: AnsiString): Integer;
 //
 //  pathServerClassConf:    Path to the server class
 //  findInServerClass:      Find the hostname in this server class
@@ -97,11 +124,12 @@ var
     tf: CTextFile;
     buffer: AnsiString;
 begin
+    Result := 0; 
     isFound := false;
     inServerClass := false;
     inType := false;
 
-    WriteLn('FoundHostInClass(): ', findInServerClass, ' --> ', hostName);
+    //WriteLn('FindHostInClass(): ', findInServerClass, ' --> ', hostName);
 
     tf := CTextFile.Create(pathServerClassConf);
 	tf.OpenFileRead();
@@ -130,15 +158,57 @@ begin
             isFound := true;
         end; // of if
 
-        
+        //WriteLn(IntToStr(tf.GetLineNumber()),':', TAB, 'SERVERCLASS=', inServerClass, TAB, 'TYPE=', inType, TAB, 'FOUND=', isFound, TAB, buffer);
 
-        WriteLn(IntToStr(tf.GetCurrentLine()),':', TAB, 'SERVERCLASS=', inServerClass, TAB, 'TYPE=', inType, TAB, 'FOUND=', isFound, TAB, buffer);
-
+        if (inServerClass = true) and (inType = true) and (isFound = true) then
+        begin
+            result := tf.GetLineNumber();
+            // WriteLn('*** FOUND ***');
+            break; // We found the hostname we searched for, break this loop.
+        end; // of if
     until tf.GetEof();
 
     tf.CloseFile();
-    FoundHostInClass := isFound;
-end; 
+    FindHostInClass := result;
+end; // of function FindHostInClass()
+
+
+
+function FindServerClassInConf(pathServerClassConf: AnsiString; searchForServerClass: AnsiString): Integer;
+{
+    Find the serverClass in the pathServerClassConf
+
+    pathServerClassConf
+    searchForServerClass
+
+    Returns the line number when found.
+}
+var
+    tf: CTextFile;
+    buffer: AnsiString;
+begin
+    Result := 0;
+  
+    tf := CTextFile.Create(pathServerClassConf);
+	tf.OpenFileRead();
+    
+    repeat
+        buffer := tf.ReadFromFile();
+        
+        DebugWriteLn(IntToStr(tf.GetLineNumber) + ':' + TAB + buffer);
+
+        if Pos('[serverClass:' + searchForServerClass + ']', buffer) > 0 then
+        begin
+            Result := tf.GetLineNumber();
+        
+            break; // We found the server class we searched for, break this loop. result = line number when found.
+        end; { of if }
+     until tf.GetEof();
+
+    tf.CloseFile();
+    FindServerClassInConf := Result;
+end; { of function FindServerClassInConf()}
+
 
 procedure ProcessServerClass(pathServerClass: AnsiString; serverClass: AnsiString; listType: AnsiString; action: AnsiString; hostName: AnsiString);
 //
@@ -344,12 +414,12 @@ begin
     if ParamCount <> 1 then
         ProgUsage(); // Show program usage, close after showing usage.
     
+    
+    LogOpen();
+    
     // We have a param string; must be the path to the Modigy file.
     pathModify := ParamStr(1);
-
     reference := GetReferenceFromPath(pathModify);
-
-    LogOpen();
 
     pathServerClassConf := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'PathServerClass');
     dirTemp := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'dirTemp');
@@ -363,9 +433,12 @@ end; // of procedure ProgInit()
 
 procedure ProgTest();
 begin
+    //WriteLn(FindHostInClass('serverclass.test', 'sc_testserverclass', 'whitelist', 'servertobefound*'));
+    WriteLn(FindServerClassInConf('serverclass.test', 'sc_testserverclass'));
 
-    WriteLn(FoundHostInClass('serverclass.test', 'sc_testserverclass', 'whitelist', 'servertobefound*'));
-    //WriteLn(FoundHostInClass(pathServerClassConf, 'nottobefound*'));
+    WriteLn(FindServerClassInConf('serverclass.test', 'sc_nowheretobefound'));
+ 
+    //WriteLn(FindHostInClass(pathServerClassConf, 'nottobefound*'));
 end; // of procedure ProgTest()
 
 
@@ -381,9 +454,11 @@ var
     listType: AnsiString;
     action: AnsiString;
     hostName: AnsiString;
+    foundHostAt: Integer;
 begin
-    MakeBackupServerClass();
+    //    MakeBackupServerClass();
 
+    foundHostAt := 0;
 
     WriteLn(pathModify);
     tfm := CTextFile.Create(pathModify);
@@ -391,7 +466,7 @@ begin
     Writeln('The status of ' + tfm.GetPath + ' is ' + BoolToStr(tfm.GetStatus, 'OPEN', 'CLOSED'));
     repeat
         line := tfm.ReadFromFile();
-        WriteLn(IntToStr(tfm.GetCurrentLine()) + ': ' + line);
+        WriteLn(IntToStr(tfm.GetLineNumber()) + ': ' + line);
         
         SetLength(s, 0);
         s := SplitString(line, ';');
@@ -401,7 +476,21 @@ begin
         action := s[2];
         hostName := s[3];
 
-        ProcessServerClass(pathServerClassConf, serverClass, listType, action, hostName);
+        if UpperCase(action) = 'ADD' then
+        begin
+            foundHostAt := FindHostInClass(pathServerClassConf, serverClass, listType, hostName);
+            if foundHostAt > 0 then
+            begin
+                WriteLn('Need to add ', hostName, ' but its already in the server class ', serverClass, ' present.');
+            end
+            else
+            begin
+                WriteLn('Hostnane ', hostName, ' needs to be added to server class ', serverClass);
+            end; { of if }
+        end; { of if }
+        
+         
+        //ProcessServerClass(pathServerClassConf, serverClass, listType, action, hostName);
         
         SetLength(s, 0); // Set the array to 0 after use.
       
@@ -421,77 +510,7 @@ begin
     WriteLn;
 end; // of procedure ProgDone()
 
-{
-procedure ProgRunOld();
-begin
-    Sleep(1001);
 
-    if ParamCount <> 4 then
-        ProgUsage();
-
-    // Get the parameters from the command line.
-    //paramServerClass := ParamStr(1);
-    //paramListType := ParamStr(2);
-    //paramAction := ParamStr(3);
-    //sparamHost := ParamStr(4);
-
-    WriteLn('paramServerClass=[', paramServerClass, ']');
-    WriteLn('paramListType=[', paramListType, ']');
-    WriteLn('paramAction=[', paramAction, ']');
-    WriteLn('paramHost=[', paramHost, ']');
-    
-    WriteLn(CompareText(paramListType, 'whitelist'));
-
-    if (CompareText(paramListType, 'whitelist') <> 0) then
-    begin
-    or (CompareText(paramListType, 'blacklist') <> 0) then
-    begin
-        WriteLn('ERROR: Option listtype is not "whitelist" or "blacklist".');
-        ProgUsage();
-    end; // of if paramListType
-
-    if (UpperCase(paramAction) <> 'ADD') or (UpperCase(paramAction) <> 'DEL') then
-    begin
-        WriteLn('ERROR: Option action is not "add" or "del".');
-        ProgUsage();
-    end; // of if paramListType
-
-
-
-    //pathServerClassConf := GetPathServerClassConf();
-    //WriteLn('Working on config file: ', pathServerClassConf);
-
-    pathServerClassConf := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'PathServerClass');
-
-    pathLog := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'PathLog');
-    WriteLn('pathLog=', pathLog);
-
-    log := CTextFile.Create(pathLog);
-	log.OpenFileWrite();
-
-    //WriteLn('GetCurrentDateTimeMicro()=', GetCurrentDateTimeMicro());
-
-    //paramServerClass := 'svc_oslindel_linux_p'; // ServerClass with whitelist entries
-    //paramServerClass := 'svc_testclass';
-    //paramServerClass := 'not_existsing_sc';
-    //paramserverClass := 'svc_emptyclassservers'; // Empty ServerClass 
-    //paramListType := 'whitelist';
-    //paramAction := 'add';
-    //paramHost := 'lsrvbl001*';
-
-    //WriteLn('Action on ', pathServerClassConf, ' in server class ', paramServerClass, ' for the ', paramListType,' to ', paramAction, ' ', paramHost);
-    log.WriteToFile(GetCurrentDateTimeMicro() + 
-        ' USERNAME=' + GetCurrentUser() +
-        ' SERVERCLASS=' + paramServerClass +
-        ' LISTTYPE=' + paramListType +
-        ' ACTION=' + paramAction +
-        ' HOSTNAME=' + paramHost);
-
-   //ProcessServerClass(pathServerClassConf);
-
-    log.CloseFile();
-end; // of procedure ProgRunOld()
-}
 
 begin
     ProgInit();

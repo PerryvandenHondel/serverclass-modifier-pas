@@ -1,3 +1,4 @@
 sc_testmod;whitelist;add;lsrvtest01*
 sc_testmod;whitelist;add;lsrvtest02*
 sc_testmod;whitelist;add;lsrvtest03*
+svcc_sh_p;whitelist;add;servertoadd*

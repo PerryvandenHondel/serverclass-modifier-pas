@@ -30,6 +30,7 @@ uses
     Dos,
     DateUtils,
     UBuild,
+    USplunkLog,
     UTextFile,
     USupLib,
     SysUtils;
@@ -41,18 +42,21 @@ const
     DEBUG_MODE_ON = 1;
     CONF_DEDUG_MODE_ON = 'DebugModeOn';
     CONF_PATH_SERVER_CLASS_CONF = 'PathServerClass';
-    CONF_DIR_TEMP = 'ditTemp';
+    CONF_DIR_TEMP = 'DirTemp';
+    CONF_PATH_LOG = 'PathLog';  
 
 
 var
     pathServerClassConf: AnsiString;
     pathLog: AnsiString;
-    log: CTextFile;
+    //log: CTextFile;
     pathModify: AnsiString;         // Path to the file with the attributes to modify.
     pathServerClass: AnsiString;
     reference: AnsiString;          // Reference; Under what reference the action is executed; ADO PBI (ADOP), ADO Task (ADOT), Change number
     dirTemp: AnsiString;            // Temp directory to store the temp work file.
     debugModeOn: Integer;           // When debug mode on = 1; debugmode off = 0
+    tfLog: CSplunkLog;
+
 
 
 
@@ -90,27 +94,37 @@ end; // of function GetPathServerClassConf
 
 
 
-procedure LogWrite(t: AnsiString);
+{procedure LogWrite(t: AnsiString);
 begin
     log.WriteToFile(GetCurrentDateTimeMicro + ' ' + t);
 end; // of procedure LogWrite()
-
+}
 
 procedure LogOpen();
 begin
-    pathLog := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'PathLog');
+    pathLog := ReadSettingKey(GetConfigPath(),'Settings', CONF_PATH_LOG);
     WriteLn('pathLog=', pathLog);
 
-    log := CTextFile.Create(pathLog);
-	log.OpenFileWrite();
-    LogWrite('Started');
+    tfLog := CSplunkLog.Create(pathLog);
+	tfLog.OpenFileWrite();
+    
+    tfLog.SetDate();
+	tfLog.SetStatus('INFO');
+    tfLog.AddSubName('init');
+	tfLog.AddKey('action', 'started');
+	tfLog.WriteLineToFile();
 end; // of procedure LogOpen()
 
 
 procedure LogClose();
 begin
-    LogWrite('Ended');
-    log.CloseFile();
+    tfLog.SetDate();
+	tfLog.SetStatus('INFO');
+    tfLog.AddSubName('done');
+	tfLog.AddKey('action', 'ended');
+	tfLog.WriteLineToFile();
+
+    tfLog.CloseFile();
 end; // of procedure LogClose()
 
 
@@ -236,13 +250,14 @@ var
 begin
     Writeln('ProcessServerClass()' + pathServerClass + '  ' + serverClass + '  ' + listType + '  ' + action + '  ' + hostName);
 
+    {
     LogWrite('USERNAME=' + GetCurrentUser() +
         ' SERVERCLASS=' + serverClass +
         ' LISTTYPE=' + listType +
         ' ACTION=' + action +
         ' HOSTNAME=' + hostName +
         ' REFERENCE=' + reference);
-
+}
     // Create a new file name as backup. serverclass.conf --> serverclass.conf.$WORK
     pathWork := pathServerClass + '.$WORK';
     CopyTheFile(pathServerClass, pathWork);
@@ -363,12 +378,13 @@ begin
     WriteLn('pathServerClass=', pathServerClass);
 
     if ForceDirectories(directoryBackup) = true then
-        LogWrite('Created the directory for backups ' + directoryBackup);
+        writeln('back directory is created.');
+        {LogWrite('Created the directory for backups ' + directoryBackup);}
 
     pathServerClassBackup := directoryBackup + '/serverclass.conf.' + IntToStr(DateTimeToUnix(Now())) + '.scmod';
 
     Writeln('Create backup of the Server Class:', pathServerClass + '  >>  ', pathServerClassBackup);
-    LogWrite('Create backup of ' + pathServerClass + ' to backup file ' + pathServerClassBackup);
+    {LogWrite('Create backup of ' + pathServerClass + ' to backup file ' + pathServerClassBackup);}
     
     CopyTheFile(pathServerClassConf, pathServerClassBackup);
 end; // of procedure MakeBackupServerClass() 
@@ -400,11 +416,19 @@ var
 begin
     tfServerClass := CTextFile.Create(pathServerClassConf);
     tfServerClass.OpenFileWrite();
-    tfServerClass.WriteToFile(''); { add an extra empty line }
+    tfServerClass.WriteToFile(CHAR_LFCR); { add an extra empty line }
     tfServerClass.WriteToFile('[serverClass:' + serverClass + ']');
     tfServerClass.CloseFile();
 
-    
+    tfLog.SetDate();
+	tfLog.SetStatus('INFO');
+    tfLog.AddSubName('addserverclass');
+	tfLog.AddKey('action', 'added');
+    tfLog.AddKey('serverclass', serverClass);
+	tfLog.WriteLineToFile();
+
+
+
 end; { of procedure AddServerClass() }
 
 
@@ -446,16 +470,6 @@ begin
     
     Halt; // Stop the program.
 end; // of procedure ProgUsage()
-
-
-
-function GetConfigPath(): AnsiString;
-{
-    Get the path to the config file.
-}
-begin
-    GetConfigPath := ParamStr(0) + '.conf';
-end; { of function GetConfigPath() }
 
 
 

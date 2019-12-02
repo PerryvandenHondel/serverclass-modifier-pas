@@ -394,6 +394,19 @@ begin
 end; // of function GetReferenceFromPath
 
 
+procedure AddServerClass(pathServerClassConf: AnsiString; serverClass: AnsiString);
+var
+    tfServerClass: CTextFile;
+begin
+    tfServerClass := CTextFile.Create(pathServerClassConf);
+    tfServerClass.OpenFileWrite();
+    tfServerClass.WriteToFile(''); { add an extra empty line }
+    tfServerClass.WriteToFile('[serverClass:' + serverClass + ']');
+    tfServerClass.CloseFile();
+
+    
+end; { of procedure AddServerClass() }
+
 
 procedure ProcessLineFromModifyFile(pathServerClass: AnsiString; serverClass: AnsiString; listType: AnsiString; action: AnsiString; hostName: AnsiString);
 {
@@ -409,14 +422,10 @@ procedure ProcessLineFromModifyFile(pathServerClass: AnsiString; serverClass: An
 begin
     DebugWriteLn('ProcessLineFromModifyFile() ' + pathServerClass + TAB + serverClass + TAB + listType + TAB + action + TAB + hostName);
 
-    if FindServerClassInConf(pathServerClass, serverClass) > 0 then
-    begin
-        WriteLn('Found ', serverClass, ' in ', pathServerClass);
-    end
-    else
-    begin
-        WriteLn('NOT FOUND ', serverClass, ' in ', pathServerClass);
-    end; { of if FindServerClassInConf }
+    { Add the server class when it does not exist in the serverclass.conf }
+    if FindServerClassInConf(pathServerClass, serverClass) = 0 then
+        AddServerClass(pathServerClass, serverClass);
+
 
     Writeln; { add an empty line to the screen between each processed lines. }
 end; { of procedure ProcessLineFromModifyFile() }

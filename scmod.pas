@@ -38,8 +38,10 @@ uses
 
 const
     TAB = #9;
-    DEBUG_MODE_ON = true;
-
+    DEBUG_MODE_ON = 1;
+    CONF_DEDUG_MODE_ON = 'DebugModeOn';
+    CONF_PATH_SERVER_CLASS_CONF = 'PathServerClass';
+    CONF_DIR_TEMP = 'ditTemp';
 
 
 var
@@ -50,12 +52,13 @@ var
     pathServerClass: AnsiString;
     reference: AnsiString;          // Reference; Under what reference the action is executed; ADO PBI (ADOP), ADO Task (ADOT), Change number
     dirTemp: AnsiString;            // Temp directory to store the temp work file.
+    debugModeOn: Integer;           // When debug mode on = 1; debugmode off = 0
 
 
 
 procedure DebugWriteLn(line: AnsiString);
 begin
-    if DEBUG_MODE_ON = true then
+    if debugModeOn = 1 then
         WriteLn(line);
 end;
 
@@ -195,7 +198,7 @@ begin
     repeat
         buffer := tf.ReadFromFile();
         
-        DebugWriteLn(IntToStr(tf.GetLineNumber) + ':' + TAB + buffer);
+        //DebugWriteLn(IntToStr(tf.GetLineNumber) + ':' + TAB + buffer);
 
         if Pos('[serverClass:' + searchForServerClass + ']', buffer) > 0 then
         begin
@@ -207,7 +210,8 @@ begin
 
     tf.CloseFile();
     FindServerClassInConf := Result;
-end; { of function FindServerClassInConf()}
+end; { of function FindServerClassInConf() }
+
 
 
 procedure ProcessServerClass(pathServerClass: AnsiString; serverClass: AnsiString; listType: AnsiString; action: AnsiString; hostName: AnsiString);
@@ -370,6 +374,7 @@ begin
 end; // of procedure MakeBackupServerClass() 
 
 
+
 function GetReferenceFromPath(path: AnsiString): AnsiString;
 //
 // Returns the reference from the path of the modify file.
@@ -389,12 +394,39 @@ begin
 end; // of function GetReferenceFromPath
 
 
+
+procedure ProcessLineFromModifyFile(pathServerClass: AnsiString; serverClass: AnsiString; listType: AnsiString; action: AnsiString; hostName: AnsiString);
+{
+    Process a line from the modify file
+
+
+    pathServerClass
+    serverClass
+    listType
+    action
+    hostName
+}
+begin
+    DebugWriteLn('ProcessLineFromModifyFile() ' + pathServerClass + TAB + serverClass + TAB + listType + TAB + action + TAB + hostName);
+
+    if FindServerClassInConf(pathServerClass, serverClass) > 0 then
+    begin
+        WriteLn('Found ', serverClass, ' in ', pathServerClass);
+    end
+    else
+    begin
+        WriteLn('NOT FOUND ', serverClass, ' in ', pathServerClass);
+    end; { of if FindServerClassInConf }
+
+    Writeln; { add an empty line to the screen between each processed lines. }
+end; { of procedure ProcessLineFromModifyFile() }
+
 procedure ProgUsage();
 begin
     writeln('Usage: scmod <modifyfile>');
     writeln('  <modifyfile>     File with the modify information.');
     writeln();
-    writeln('The modifyfile is a CSV formarted file.');
+    writeln('The modify file is a CSV formated file.');
     writeln('Format:');
     writeln('<serverclass>;<listtype>;<action>;<hostname>');
     writeln(TAB, 'serverclass = the name of the server class to modify');
@@ -407,39 +439,48 @@ begin
 end; // of procedure ProgUsage()
 
 
+
+function GetConfigPath(): AnsiString;
+{
+    Get the path to the config file.
+}
+begin
+    GetConfigPath := ParamStr(0) + '.conf';
+end; { of function GetConfigPath() }
+
+
+
 procedure ProgInit();
 begin
     ProgTitle();
 
     if ParamCount <> 1 then
         ProgUsage(); // Show program usage, close after showing usage.
-    
-    
+        
     LogOpen();
     
     // We have a param string; must be the path to the Modigy file.
     pathModify := ParamStr(1);
     reference := GetReferenceFromPath(pathModify);
 
-    pathServerClassConf := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'PathServerClass');
-    dirTemp := ReadSettingKey(ParamStr(0) +'.conf','Settings', 'dirTemp');
-
-    Writeln('Server class location: ', pathServerClassConf);
-    Writeln('Temp directory: ', dirTemp);
-    Writeln('Modify file: ', pathModify);
-
+    debugModeOn := StrToInt(ReadSettingKey(GetConfigPath(),'Settings', CONF_DEDUG_MODE_ON));
+    if debugModeOn = 1 then
+        WriteLn('DebugModeOn = ON; set in scmod.conf (DebugMode=1)');
 end; // of procedure ProgInit()
+
 
 
 procedure ProgTest();
 begin
     //WriteLn(FindHostInClass('serverclass.test', 'sc_testserverclass', 'whitelist', 'servertobefound*'));
-    WriteLn(FindServerClassInConf('serverclass.test', 'sc_testserverclass'));
+    //WriteLn(FindServerClassInConf('serverclass.test', 'sc_testserverclass'));
 
-    WriteLn(FindServerClassInConf('serverclass.test', 'sc_nowheretobefound'));
+    //WriteLn(FindServerClassInConf('serverclass.test', 'sc_nowheretobefound'));
  
     //WriteLn(FindHostInClass(pathServerClassConf, 'nottobefound*'));
+    WriteLn(GetConfigPath());
 end; // of procedure ProgTest()
+
 
 
 procedure ProgRun();
@@ -458,6 +499,8 @@ var
 begin
     //    MakeBackupServerClass();
 
+    pathServerClassConf := ReadSettingKey(GetConfigPath(),'Settings', CONF_PATH_SERVER_CLASS_CONF);
+
     foundHostAt := 0;
 
     WriteLn(pathModify);
@@ -466,7 +509,7 @@ begin
     Writeln('The status of ' + tfm.GetPath + ' is ' + BoolToStr(tfm.GetStatus, 'OPEN', 'CLOSED'));
     repeat
         line := tfm.ReadFromFile();
-        WriteLn(IntToStr(tfm.GetLineNumber()) + ': ' + line);
+        //DebugWriteLn(IntToStr(tfm.GetLineNumber()) + ': ' + line);
         
         SetLength(s, 0);
         s := SplitString(line, ';');
@@ -476,27 +519,12 @@ begin
         action := s[2];
         hostName := s[3];
 
-        if UpperCase(action) = 'ADD' then
-        begin
-            foundHostAt := FindHostInClass(pathServerClassConf, serverClass, listType, hostName);
-            if foundHostAt > 0 then
-            begin
-                WriteLn('Need to add ', hostName, ' but its already in the server class ', serverClass, ' present.');
-            end
-            else
-            begin
-                WriteLn('Hostnane ', hostName, ' needs to be added to server class ', serverClass);
-            end; { of if }
-        end; { of if }
-        
-         
-        //ProcessServerClass(pathServerClassConf, serverClass, listType, action, hostName);
-        
+        ProcessLineFromModifyFile(pathServerClassConf, serverClass, listType, action, hostName);
+
         SetLength(s, 0); // Set the array to 0 after use.
       
     until tfm.GetEof();
     tfm.CloseFile();
-
 end; // of procedure ProgRun()
 
 
@@ -514,7 +542,7 @@ end; // of procedure ProgDone()
 
 begin
     ProgInit();
-    //ProgRun();
-    ProgTest();
+    ProgRun();
+    //ProgTest();
     ProgDone();
 end. // of program ServerClassModifier

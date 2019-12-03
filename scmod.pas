@@ -46,6 +46,7 @@ const
     CONF_PATH_LOG = 'PathLog';  
 
 
+
 var
     pathServerClassConf: AnsiString;
     pathLog: AnsiString;
@@ -59,38 +60,11 @@ var
 
 
 
-
 procedure DebugWriteLn(line: AnsiString);
 begin
     if debugModeOn = 1 then
         WriteLn(line);
 end;
-
-
-function GetPathServerClassConf(): AnsiString;
-{
-    Get the path to the serverclass.conf file.
-    Location is stored in scmod.conf
-}
-var
-    path: AnsiString;
-    r: AnsiString;
-    tf: TextFile;
-begin
-    r := '';
-
-    path := ParamStr(0) +'.conf';
-    WriteLn('Config file is ', path);
-    
-    AssignFile(tf, path);
-    Reset(tf);
-
-    ReadLn(tf, r);
-
-    Close(tf);
-
-    GetPathServerClassConf := r;
-end; // of function GetPathServerClassConf
 
 
 
@@ -411,6 +385,9 @@ end; // of function GetReferenceFromPath
 
 
 procedure AddServerClass(pathServerClassConf: AnsiString; serverClass: AnsiString);
+{
+    Add a new server class to the serverclass.conf file with name serverClass.
+}
 var
     tfServerClass: CTextFile;
 begin
@@ -426,9 +403,6 @@ begin
 	tfLog.AddKey('action', 'added');
     tfLog.AddKey('serverclass', serverClass);
 	tfLog.WriteLineToFile();
-
-
-
 end; { of procedure AddServerClass() }
 
 

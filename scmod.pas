@@ -38,13 +38,13 @@ uses
 
 
 const
-    TAB = #9;
     DEBUG_MODE_ON = 1;
     CONF_DEDUG_MODE_ON = 'DebugModeOn';
     CONF_PATH_SERVER_CLASS_CONF = 'PathServerClass';
     CONF_DIR_TEMP = 'DirTemp';
     CONF_PATH_LOG = 'PathLog';  
-
+    ACTION_ADD = 'ADD';
+    ACTION_DEL = 'DEL';
 
 
 var
@@ -149,7 +149,7 @@ begin
             isFound := true;
         end; // of if
 
-        //WriteLn(IntToStr(tf.GetLineNumber()),':', TAB, 'SERVERCLASS=', inServerClass, TAB, 'TYPE=', inType, TAB, 'FOUND=', isFound, TAB, buffer);
+        //WriteLn(IntToStr(tf.GetLineNumber()),':', CHAR_TAB, 'SERVERCLASS=', inServerClass, CHAR_TAB, 'TYPE=', inType, CHAR_TAB, 'FOUND=', isFound, CHAR_TAB, buffer);
 
         if (inServerClass = true) and (inType = true) and (isFound = true) then
         begin
@@ -186,7 +186,7 @@ begin
     repeat
         buffer := tf.ReadFromFile();
         
-        //DebugWriteLn(IntToStr(tf.GetLineNumber) + ':' + TAB + buffer);
+        //DebugWriteLn(IntToStr(tf.GetLineNumber) + ':' + CHAR_TAB + buffer);
 
         if Pos('[serverClass:' + searchForServerClass + ']', buffer) > 0 then
         begin
@@ -409,23 +409,46 @@ end; { of procedure AddServerClass() }
 procedure ProcessLineFromModifyFile(pathServerClass: AnsiString; serverClass: AnsiString; listType: AnsiString; action: AnsiString; hostName: AnsiString);
 {
     Process a line from the modify file
-
-
     pathServerClass
     serverClass
     listType
     action
     hostName
 }
+var
+    lineHostName: Integer;
 begin
-    DebugWriteLn('ProcessLineFromModifyFile() ' + pathServerClass + TAB + serverClass + TAB + listType + TAB + action + TAB + hostName);
+    if Length(pathServerClass) = 0 then
+        Exit(); { The line is empty; skipp this line }
 
-    { Add the server class when it does not exist in the serverclass.conf }
-    if FindServerClassInConf(pathServerClass, serverClass) = 0 then
-        AddServerClass(pathServerClass, serverClass);
+    DebugWriteLn('===');
+    DebugWriteLn('ProcessLineFromModifyFile() ' + pathServerClass + CHAR_TAB + serverClass + CHAR_TAB + listType + CHAR_TAB + action + CHAR_TAB + hostName);
 
+    case UpperCase(action) of
+        ACTION_ADD:
+            begin
+                DebugWriteLn(ACTION_ADD);
 
-    Writeln; { add an empty line to the screen between each processed lines. }
+                if FindServerClassInConf(pathServerClass, serverClass) = 0 then
+                    AddServerClass(pathServerClass, serverClass); { When the server class does not exists in the serverclass.conf file, add this at the end. }
+
+                lineHostName := FindHostInClass(pathServerClass, serverClass, listType, hostName);
+                DebugWriteLn('Found ' + hostName + ' in ' + serverClass + ' at line number ' + IntToStr(lineHostName));
+
+            end;
+        ACTION_DEL:
+            begin
+                WriteLn(ACTION_DEL);
+
+                lineHostName := FindHostInClass(pathServerClass, serverClass, listType, hostName);
+                DebugWriteLn('Found ' + hostName + ' in ' + serverClass + ' at line number ' + IntToStr(lineHostName));
+
+            end;
+        else
+            WriteLn('Wrong action (', action, ') specified.');
+    end; { if UpperCase(action) }
+
+     { add an empty line to the screen between each processed lines. }
 end; { of procedure ProcessLineFromModifyFile() }
 
 procedure ProgUsage();
@@ -436,10 +459,10 @@ begin
     writeln('The modify file is a CSV formated file.');
     writeln('Format:');
     writeln('<serverclass>;<listtype>;<action>;<hostname>');
-    writeln(TAB, 'serverclass = the name of the server class to modify');
-    writeln(TAB, 'listtype = whitelist or blacklist');
-    writeln(TAB, 'action = add or del');
-    writeln(TAB, 'hostname = The name of the host, use wildcard at the end');
+    writeln(CHAR_TAB, 'serverclass = the name of the server class to modify');
+    writeln(CHAR_TAB, 'listtype = whitelist or blacklist');
+    writeln(CHAR_TAB, 'action = add or del');
+    writeln(CHAR_TAB, 'hostname = The name of the host, use wildcard at the end');
     Writeln();
     
     Halt; // Stop the program.

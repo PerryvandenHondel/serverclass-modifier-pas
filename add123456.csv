@@ -5,3 +5,4 @@ svcc_sh_p;whitelist;add;servertoadd*
 sc_andanotherone;whitelist;add;servertoaddagain*
 sc_andanotherone;blacklist;del;serverdelthisone*
 sc_andanotherone;blacklist;thisisawrongaction;serverdelthisone*
+sc_whatever;whitelist;add;thisisahostname*

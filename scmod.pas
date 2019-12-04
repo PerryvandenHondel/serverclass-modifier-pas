@@ -419,19 +419,27 @@ procedure AddHostToServerClass(pathServerClass: AnsiString; serverClass: AnsiStr
 var
     tfr: CTextFile;
     tfw: CTextFile;
-                       
-
+    pathWork: AnsiString;
 begin
     DebugWriteLn('=== AddHostToServerClass() ===');
     DebugWriteLn(pathServerClass + CHAR_TAB + serverClass + CHAR_TAB + listType + CHAR_TAB + CHAR_TAB + hostName);
 
+    pathWork := pathServerClass + '.WORK';
+
     tfr := CTextFile.Create(pathServerClass);
     tfr.OpenFileRead();
+
+    tfw := CTextFile.Create(pathWork);
+    tfw.OpenFileWrite();
+
     repeat
         WriteLn(IntToStr(tfr.GetLineNumber()) + ': ' + tfr.ReadFromFile());
 
-        
+
     until tfr.GetEof();
+    
+    tfw.CloseFile();
+
     tfr.CloseFile();   
 end; { of procedure AddHostToServerClass() }
 

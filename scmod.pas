@@ -419,7 +419,7 @@ procedure AddHostToServerClass(pathServerClass: AnsiString; serverClass: AnsiStr
 var
     tfr: CTextFile;
     tfw: CTextFile;
-    pathWork: AnsiString;
+    pathWork: AnsiString; { Path to temporary worker file path}
 begin
     DebugWriteLn('=== AddHostToServerClass() ===');
     DebugWriteLn(pathServerClass + CHAR_TAB + serverClass + CHAR_TAB + listType + CHAR_TAB + CHAR_TAB + hostName);

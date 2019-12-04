@@ -54,7 +54,7 @@ var
     pathModify: AnsiString;         // Path to the file with the attributes to modify.
     pathServerClass: AnsiString;
     reference: AnsiString;          // Reference; Under what reference the action is executed; ADO PBI (ADOP), ADO Task (ADOT), Change number
-    dirTemp: AnsiString;            // Temp directory to store the temp work file.
+    //dirTemp: AnsiString;            // Temp directory to store the temp work file.
     debugModeOn: Integer;           // When debug mode on = 1; debugmode off = 0
     tfLog: CSplunkLog;
 
@@ -66,13 +66,6 @@ begin
         WriteLn(line);
 end;
 
-
-
-{procedure LogWrite(t: AnsiString);
-begin
-    log.WriteToFile(GetCurrentDateTimeMicro + ' ' + t);
-end; // of procedure LogWrite()
-}
 
 procedure LogOpen();
 begin
@@ -90,6 +83,7 @@ begin
 end; // of procedure LogOpen()
 
 
+
 procedure LogClose();
 begin
     tfLog.SetDate();
@@ -100,6 +94,7 @@ begin
 
     tfLog.CloseFile();
 end; // of procedure LogClose()
+
 
 
 function FindHostInClass(pathServerClassConf: AnsiString; findInServerClass: AnsiString; findInType: AnsiString; hostName: AnsiString): Integer;
@@ -319,6 +314,7 @@ begin
 end; // of procedure ProcessServerClass
 
 
+
 procedure ProgTitle();
 begin
     writeln();
@@ -326,14 +322,6 @@ begin
     writeln();
 end; // of procedure ProgTitle()
 
-
-{procedure ProgReadConfig()
-var
-    pathServerClass := 
-begin
-
-end; // of procedure ProgReadConfig
-}
 
 
 procedure MakeBackupServerClass();
@@ -360,6 +348,14 @@ begin
     Writeln('Create backup of the Server Class:', pathServerClass + '  >>  ', pathServerClassBackup);
     {LogWrite('Create backup of ' + pathServerClass + ' to backup file ' + pathServerClassBackup);}
     
+    tfLog.SetDate();
+	tfLog.SetStatus(USPLUNKLOG_LOGLEVEL_INFO);
+    tfLog.AddKey(USPLUNKLOG_COMPONENT, 'MakeBackupServerClass');
+	tfLog.AddKey(USPLUNKLOG_MESSAGE, 'Create a backup of the current serverclass.conf before modification');
+    tfLog.AddKey('backup', pathServerClassBackup);
+    tfLog.AddKey('reference', reference);
+	tfLog.WriteLineToFile();
+
     CopyTheFile(pathServerClassConf, pathServerClassBackup);
 end; // of procedure MakeBackupServerClass() 
 
@@ -406,6 +402,25 @@ begin
 end; { of procedure AddServerClass() }
 
 
+
+procedure AddHostToServerClass(pathServerClass: AnsiString; serverClass: AnsiString; listType: AnsiString; hostName: AnsiString);
+{
+    AddHostToServerClass()
+
+    Add a new hostName to the pathServerClass under the serverClass using the listType
+
+    pathServerClass
+    serverClass
+    listType
+    hostName
+}
+begin
+    DebugWriteLn('=== AddHostToServerClass() ===');
+    DebugWriteLn(pathServerClass + CHAR_TAB + serverClass + CHAR_TAB + listType + CHAR_TAB + CHAR_TAB + hostName);
+end; { of procedure AddHostToServerClass() }
+
+
+
 procedure ProcessLineFromModifyFile(pathServerClass: AnsiString; serverClass: AnsiString; listType: AnsiString; action: AnsiString; hostName: AnsiString);
 {
     Process a line from the modify file
@@ -427,6 +442,7 @@ begin
     case UpperCase(action) of
         ACTION_ADD:
             begin
+                { Add action }
                 DebugWriteLn(ACTION_ADD);
 
                 if FindServerClassInConf(pathServerClass, serverClass) = 0 then
@@ -435,8 +451,9 @@ begin
                 lineHostName := FindHostInClass(pathServerClass, serverClass, listType, hostName);
                 if lineHostName > 0 then
                 begin
+                    { Add action, already existing }
                     {   The lineHostName is the line where the hostName is found in the serverClass for the listType
-                        It is already existing, no need to add it; just log the existance. }
+                        It is already existing (lineHostName > 0), no need to add it; just log the existance. }
 
                     tfLog.SetDate();
 	                tfLog.SetStatus(USPLUNKLOG_LOGLEVEL_INFO);
@@ -450,10 +467,13 @@ begin
                 end
                 else
                 begin
+                    { Add action, not existing }
+                    AddHostToServerClass(pathServerClass, serverClass, listType, hostName);
                 end; { of if lineHostName }
             end;
         ACTION_DEL:
             begin
+                { Delete action }
                 WriteLn(ACTION_DEL);
 
                 lineHostName := FindHostInClass(pathServerClass, serverClass, listType, hostName);
@@ -474,6 +494,7 @@ begin
                 end
                 else
                 begin
+                    { }
                 end; { of if lineHostName }
 
                 DebugWriteLn('Found ' + hostName + ' in ' + serverClass + ' at line number ' + IntToStr(lineHostName));
@@ -552,15 +573,17 @@ var
     listType: AnsiString;
     action: AnsiString;
     hostName: AnsiString;
-    foundHostAt: Integer;
+    //foundHostAt: Integer;
 begin
-    //    MakeBackupServerClass();
+    MakeBackupServerClass();
 
     pathServerClassConf := ReadSettingKey(GetConfigPath(),'Settings', CONF_PATH_SERVER_CLASS_CONF);
 
-    foundHostAt := 0;
+    //foundHostAt := 0;
 
     WriteLn(pathModify);
+
+
     tfm := CTextFile.Create(pathModify);
     tfm.OpenFileRead();
     Writeln('The status of ' + tfm.GetPath + ' is ' + BoolToStr(tfm.GetStatus, 'OPEN', 'CLOSED'));

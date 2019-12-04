@@ -42,7 +42,9 @@ const
     CONF_DEDUG_MODE_ON = 'DebugModeOn';
     CONF_PATH_SERVER_CLASS_CONF = 'PathServerClass';
     CONF_DIR_TEMP = 'DirTemp';
-    CONF_PATH_LOG = 'PathLog';  
+    CONF_PATH_LOG = 'PathLog';
+    CONF_DIR_BACKUP = 'DirBackup';
+    CONF_SETTINGS = 'Settings';
     ACTION_ADD = 'ADD';
     ACTION_DEL = 'DEL';
 
@@ -69,7 +71,7 @@ end;
 
 procedure LogOpen();
 begin
-    pathLog := ReadSettingKey(GetConfigPath(),'Settings', CONF_PATH_LOG);
+    pathLog := ReadSettingKey(GetConfigPath(), CONF_SETTINGS, CONF_PATH_LOG);
     WriteLn('pathLog=', pathLog);
 
     tfLog := CSplunkLog.Create(pathLog);
@@ -324,7 +326,7 @@ end; // of procedure ProgTitle()
 
 
 
-procedure MakeBackupServerClass();
+procedure MakeBackupServerClass(pathSource: AnsiString);
 //
 // Read the backup directory location for the config file.
 // Read the serverclass.conf location for the server class from the config file.
@@ -334,7 +336,7 @@ var
     directoryBackup: AnsiString;
     pathServerClassBackup: AnsiString;
 begin
-    directoryBackup := ReadSettingKey(ParamStr(0) + '.conf', 'Settings', 'DirBackup');
+    directoryBackup := ReadSettingKey(GetConfigPath(), CONF_SETTINGS, CONF_DIR_BACKUP);
 
     WriteLn('directoryBackup=', directoryBackup);
     WriteLn('pathServerClass=', pathServerClass);
@@ -345,7 +347,7 @@ begin
 
     pathServerClassBackup := directoryBackup + '/serverclass.conf.' + IntToStr(DateTimeToUnix(Now())) + '.scmod';
 
-    Writeln('Create backup of the Server Class:', pathServerClass + '  >>  ', pathServerClassBackup);
+    //Writeln('Create backup of the Server Class:', pathServerClass + '  >>  ', pathServerClassBackup);
     {LogWrite('Create backup of ' + pathServerClass + ' to backup file ' + pathServerClassBackup);}
     
     tfLog.SetDate();
@@ -356,7 +358,7 @@ begin
     tfLog.AddKey('reference', reference);
 	tfLog.WriteLineToFile();
 
-    CopyTheFile(pathServerClassConf, pathServerClassBackup);
+    CopyTheFile(pathSource, pathServerClassBackup);
 end; // of procedure MakeBackupServerClass() 
 
 
@@ -414,9 +416,23 @@ procedure AddHostToServerClass(pathServerClass: AnsiString; serverClass: AnsiStr
     listType
     hostName
 }
+var
+    tfr: CTextFile;
+    tfw: CTextFile;
+                       
+
 begin
     DebugWriteLn('=== AddHostToServerClass() ===');
     DebugWriteLn(pathServerClass + CHAR_TAB + serverClass + CHAR_TAB + listType + CHAR_TAB + CHAR_TAB + hostName);
+
+    tfr := CTextFile.Create(pathServerClass);
+    tfr.OpenFileRead();
+    repeat
+        WriteLn(IntToStr(tfr.GetLineNumber()) + ': ' + tfr.ReadFromFile());
+
+        
+    until tfr.GetEof();
+    tfr.CloseFile();   
 end; { of procedure AddHostToServerClass() }
 
 
@@ -541,7 +557,7 @@ begin
     pathModify := ParamStr(1);
     reference := GetReferenceFromPath(pathModify);
 
-    debugModeOn := StrToInt(ReadSettingKey(GetConfigPath(),'Settings', CONF_DEDUG_MODE_ON));
+    debugModeOn := StrToInt(ReadSettingKey(GetConfigPath(), CONF_SETTINGS, CONF_DEDUG_MODE_ON));
     if debugModeOn = 1 then
         WriteLn('DebugModeOn = ON; set in scmod.conf (DebugMode=1)');
 end; // of procedure ProgInit()
@@ -575,14 +591,15 @@ var
     hostName: AnsiString;
     //foundHostAt: Integer;
 begin
-    MakeBackupServerClass();
+    
 
-    pathServerClassConf := ReadSettingKey(GetConfigPath(),'Settings', CONF_PATH_SERVER_CLASS_CONF);
+    pathServerClassConf := ReadSettingKey(GetConfigPath(), CONF_SETTINGS, CONF_PATH_SERVER_CLASS_CONF);
 
     //foundHostAt := 0;
 
     WriteLn(pathModify);
 
+    MakeBackupServerClass(pathServerClassConf);
 
     tfm := CTextFile.Create(pathModify);
     tfm.OpenFileRead();

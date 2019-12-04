@@ -435,10 +435,9 @@ begin
                 lineHostName := FindHostInClass(pathServerClass, serverClass, listType, hostName);
                 if lineHostName > 0 then
                 begin
-                    { 
-                        The lineHostName is the line where the hostName is found in the serverClass fin the listType
-                        Already existing, no need to add it; just log the existance.
-                    }
+                    {   The lineHostName is the line where the hostName is found in the serverClass for the listType
+                        It is already existing, no need to add it; just log the existance. }
+
                     tfLog.SetDate();
 	                tfLog.SetStatus(USPLUNKLOG_LOGLEVEL_INFO);
                     tfLog.AddKey(USPLUNKLOG_COMPONENT, 'ProcessLineFromModifyFile');
@@ -451,16 +450,35 @@ begin
                 end
                 else
                 begin
-                end;
-                DebugWriteLn('Found ' + hostName + ' in ' + serverClass + ' at line number ' + IntToStr(lineHostName));
-
+                end; { of if lineHostName }
             end;
         ACTION_DEL:
             begin
                 WriteLn(ACTION_DEL);
 
                 lineHostName := FindHostInClass(pathServerClass, serverClass, listType, hostName);
+                if lineHostName = 0 then
+                begin
+                    {   There was nothing found for hostName in listType of serverClass 
+                        So there is nothing to delete also }
+
+                    tfLog.SetDate();
+	                tfLog.SetStatus(USPLUNKLOG_LOGLEVEL_INFO);
+                    tfLog.AddKey(USPLUNKLOG_COMPONENT, 'ProcessLineFromModifyFile');
+	                tfLog.AddKey(USPLUNKLOG_MESSAGE, 'Hostname to remove does not exist in the server class under the list type');
+                    tfLog.AddKey('serverclass', serverClass);
+                    tfLog.AddKey('listtype', listType);
+                    tfLog.AddKey('hostname', hostName);
+                    tfLog.AddKey('reference', reference);
+	                tfLog.WriteLineToFile();
+                end
+                else
+                begin
+                end; { of if lineHostName }
+
                 DebugWriteLn('Found ' + hostName + ' in ' + serverClass + ' at line number ' + IntToStr(lineHostName));
+
+
 
             end;
         else

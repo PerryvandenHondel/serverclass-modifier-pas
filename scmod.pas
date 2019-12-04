@@ -83,9 +83,9 @@ begin
 	tfLog.OpenFileWrite();
     
     tfLog.SetDate();
-	tfLog.SetStatus('INFO');
-    tfLog.AddSubName('init');
-	tfLog.AddKey('action', 'started');
+	tfLog.SetStatus(USPLUNKLOG_LOGLEVEL_INFO);
+    tfLog.AddKey(USPLUNKLOG_COMPONENT, 'scmod');
+	tfLog.AddKey(USPLUNKLOG_ACTION, 'started');
 	tfLog.WriteLineToFile();
 end; // of procedure LogOpen()
 
@@ -93,9 +93,9 @@ end; // of procedure LogOpen()
 procedure LogClose();
 begin
     tfLog.SetDate();
-	tfLog.SetStatus('INFO');
-    tfLog.AddSubName('done');
-	tfLog.AddKey('action', 'ended');
+	tfLog.SetStatus(USPLUNKLOG_LOGLEVEL_INFO);
+    tfLog.AddKey(USPLUNKLOG_COMPONENT, 'scmod');
+	tfLog.AddKey(USPLUNKLOG_ACTION, 'ended');
 	tfLog.WriteLineToFile();
 
     tfLog.CloseFile();
@@ -371,7 +371,7 @@ function GetReferenceFromPath(path: AnsiString): AnsiString;
 //
 //  path: /dir/dir/dir/<reference>.csv
 //
-// Returns: reference path of the file.
+// Returns: <reference> path of the file.
 //
 var
     r: AnsiString;
@@ -398,9 +398,9 @@ begin
     tfServerClass.CloseFile();
 
     tfLog.SetDate();
-	tfLog.SetStatus('INFO');
-    tfLog.AddSubName('addserverclass');
-	tfLog.AddKey('action', 'added');
+	tfLog.SetStatus(USPLUNKLOG_LOGLEVEL_INFO);
+    tfLog.AddKey(USPLUNKLOG_COMPONENT, 'addserverclass');
+	tfLog.AddKey(USPLUNKLOG_ACTION, 'added');
     tfLog.AddKey('serverclass', serverClass);
 	tfLog.WriteLineToFile();
 end; { of procedure AddServerClass() }
@@ -421,8 +421,8 @@ begin
     if Length(pathServerClass) = 0 then
         Exit(); { The line is empty; skipp this line }
 
-    DebugWriteLn('===');
-    DebugWriteLn('ProcessLineFromModifyFile() ' + pathServerClass + CHAR_TAB + serverClass + CHAR_TAB + listType + CHAR_TAB + action + CHAR_TAB + hostName);
+    DebugWriteLn('=== ProcessLineFromModifyFile() ===');
+    DebugWriteLn(pathServerClass + CHAR_TAB + serverClass + CHAR_TAB + listType + CHAR_TAB + action + CHAR_TAB + hostName);
 
     case UpperCase(action) of
         ACTION_ADD:
@@ -433,6 +433,25 @@ begin
                     AddServerClass(pathServerClass, serverClass); { When the server class does not exists in the serverclass.conf file, add this at the end. }
 
                 lineHostName := FindHostInClass(pathServerClass, serverClass, listType, hostName);
+                if lineHostName > 0 then
+                begin
+                    { 
+                        The lineHostName is the line where the hostName is found in the serverClass fin the listType
+                        Already existing, no need to add it; just log the existance.
+                    }
+                    tfLog.SetDate();
+	                tfLog.SetStatus(USPLUNKLOG_LOGLEVEL_INFO);
+                    tfLog.AddKey(USPLUNKLOG_COMPONENT, 'ProcessLineFromModifyFile');
+	                tfLog.AddKey(USPLUNKLOG_MESSAGE, 'Host already existing in server class for list type');
+                    tfLog.AddKey('serverclass', serverClass);
+                    tfLog.AddKey('listtype', listType);
+                    tfLog.AddKey('hostname', hostName);
+                    tfLog.AddKey('reference', reference);
+	                tfLog.WriteLineToFile();
+                end
+                else
+                begin
+                end;
                 DebugWriteLn('Found ' + hostName + ' in ' + serverClass + ' at line number ' + IntToStr(lineHostName));
 
             end;

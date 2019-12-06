@@ -420,6 +420,9 @@ var
     tfr: CTextFile;
     tfw: CTextFile;
     pathWork: AnsiString; { Path to temporary worker file path}
+    buffer: AnsiString;
+    inServerClass: Boolean;
+    inListType: Boolean;
 begin
     DebugWriteLn('=== AddHostToServerClass() ===');
     DebugWriteLn(pathServerClass + CHAR_TAB + serverClass + CHAR_TAB + listType + CHAR_TAB + CHAR_TAB + hostName);
@@ -432,9 +435,36 @@ begin
     tfw := CTextFile.Create(pathWork);
     tfw.OpenFileWrite();
 
+    inServerClass := false;
+    inListType := false;
+    
     repeat
-        WriteLn(IntToStr(tfr.GetLineNumber()) + ': ' + tfr.ReadFromFile());
+        //WriteLn(IntToStr(tfr.GetLineNumber()) + ': ' + tfr.ReadFromFile());
 
+        buffer := tfr.ReadFromFile();
+        
+        if Pos('[serverClass:' + serverClass + ']', buffer) > 0 then
+        begin
+            inServerClass := true;
+        end; // of if Pos
+
+        if Pos(listType, buffer) > 0 then
+        begin
+            inListType := true;
+        end; // of if
+
+
+        WriteLn(IntToStr(tfr.GetLineNumber()) + CHAR_TAB + BoolToStr(inServerClass, true) + CHAR_TAB + BoolToStr(inListType, true) + CHAR_TAB + buffer);
+
+        if (inServerClass = true) and (Length(buffer) = 0) then
+        begin
+            // You are in the server class and and empty line is found. Must be the end of the server class.
+            inServerClass := false;
+            WriteLn('ADD HERE NEW HOSTNAME', listType, CHAR_TAB, hostName);
+        end; // of if 
+        
+        
+      
 
     until tfr.GetEof();
     
@@ -581,6 +611,8 @@ begin
  
     //WriteLn(FindHostInClass(pathServerClassConf, 'nottobefound*'));
     WriteLn(GetConfigPath());
+    AddHostToServerClass('/home/perry/development/pascal/scmod/serverclass.conf', 'sc_testmod', 'whitelist', 'lsrvtest01*');
+
 end; // of procedure ProgTest()
 
 
@@ -647,7 +679,7 @@ end; // of procedure ProgDone()
 
 begin
     ProgInit();
-    ProgRun();
-    //ProgTest();
+    //ProgRun();
+    ProgTest();
     ProgDone();
 end. // of program ServerClassModifier

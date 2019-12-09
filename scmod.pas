@@ -414,8 +414,10 @@ begin
     if Pos(listType, line) > 0 then
     begin
         //WriteLn(line);
+        { Find the number in the string line: "whitelist.12 = server*" }
         numberString := Copy(line, Pos('.', line) + 1, Pos(' = ', line) - (Pos('.', line) + 1));
         //WriteLn('[' + numberString + ']');
+        { Convert to number }
         curListTypeNumber := StrToInt(numberString);
         //WriteLn(curListTypeNumber);
     end; { of if }
@@ -443,7 +445,10 @@ var
     inServerClass: Boolean;
     inListType: Boolean;
     listTypeCount: Integer;
+    listTypeMax: Integer;
+    addLine: AnsiString;
 begin
+    DebugWriteLn('');
     DebugWriteLn('=== AddHostToServerClass() ===');
     DebugWriteLn(pathServerClass + CHAR_TAB + serverClass + CHAR_TAB + listType + CHAR_TAB + CHAR_TAB + hostName);
 
@@ -458,7 +463,8 @@ begin
     inServerClass := false;
     inListType := false;
     listTypeCount := 0;
-    
+    listTypeMax := 0;
+       
     repeat
         //WriteLn(IntToStr(tfr.GetLineNumber()) + ': ' + tfr.ReadFromFile());
 
@@ -472,7 +478,15 @@ begin
         if Pos(listType, buffer) > 0 then
         begin
             inListType := true;
-        end; // of if
+        end; // of if 
+
+        if inListType = true then
+        begin
+            listTypeCount := GetListTypeCount(buffer, listType);
+            if listTypeCount > listTypeMax then
+                listTypeMax := listTypeCount + 1;
+            WriteLn('Current listTypeMax = ', listTypeMax);
+        end; { of if }
 
 
         WriteLn(IntToStr(tfr.GetLineNumber()) + CHAR_TAB + BoolToStr(inServerClass, true) + CHAR_TAB + BoolToStr(inListType, true) + CHAR_TAB + buffer);
@@ -482,8 +496,9 @@ begin
             // You are in the server class and and empty line is found. Must be the end of the server class.
             inServerClass := false;
             
-            WriteLn('ADD HERE NEW HOSTNAME', listType, CHAR_TAB, hostName);
-            WriteLn(listType, listTypeCount);
+            WriteLn('>>ADD HERE NEW HOSTNAME', CHAR_TAB, listType, CHAR_TAB, hostName);
+            addLine := listType + '.' + IntToStr(listTypeMax) + ' = ' + hostName;
+            WriteLn(addLine);
         end; // of if 
         
     until tfr.GetEof();

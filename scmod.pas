@@ -405,6 +405,25 @@ end; { of procedure AddServerClass() }
 
 
 
+function GetListTypeCount(line: AnsiString; listType: AnsiString): Integer;
+var
+    numberString: AnsiString;
+    curListTypeNumber: Integer;
+begin
+    //sWriteLn('GetListTypeCount()');
+    if Pos(listType, line) > 0 then
+    begin
+        //WriteLn(line);
+        numberString := Copy(line, Pos('.', line) + 1, Pos(' = ', line) - (Pos('.', line) + 1));
+        //WriteLn('[' + numberString + ']');
+        curListTypeNumber := StrToInt(numberString);
+        //WriteLn(curListTypeNumber);
+    end; { of if }
+    Result := curListTypeNumber;
+end; { function GetListTypeCount() }
+
+
+
 procedure AddHostToServerClass(pathServerClass: AnsiString; serverClass: AnsiString; listType: AnsiString; hostName: AnsiString);
 {
     AddHostToServerClass()
@@ -423,6 +442,7 @@ var
     buffer: AnsiString;
     inServerClass: Boolean;
     inListType: Boolean;
+    listTypeCount: Integer;
 begin
     DebugWriteLn('=== AddHostToServerClass() ===');
     DebugWriteLn(pathServerClass + CHAR_TAB + serverClass + CHAR_TAB + listType + CHAR_TAB + CHAR_TAB + hostName);
@@ -437,6 +457,7 @@ begin
 
     inServerClass := false;
     inListType := false;
+    listTypeCount := 0;
     
     repeat
         //WriteLn(IntToStr(tfr.GetLineNumber()) + ': ' + tfr.ReadFromFile());
@@ -460,12 +481,11 @@ begin
         begin
             // You are in the server class and and empty line is found. Must be the end of the server class.
             inServerClass := false;
+            
             WriteLn('ADD HERE NEW HOSTNAME', listType, CHAR_TAB, hostName);
+            WriteLn(listType, listTypeCount);
         end; // of if 
         
-        
-      
-
     until tfr.GetEof();
     
     tfw.CloseFile();
@@ -563,6 +583,8 @@ begin
      { add an empty line to the screen between each processed lines. }
 end; { of procedure ProcessLineFromModifyFile() }
 
+
+
 procedure ProgUsage();
 begin
     writeln('Usage: scmod <modifyfile>');
@@ -603,6 +625,8 @@ end; // of procedure ProgInit()
 
 
 procedure ProgTest();
+var
+    r: Integer;
 begin
     //WriteLn(FindHostInClass('serverclass.test', 'sc_testserverclass', 'whitelist', 'servertobefound*'));
     //WriteLn(FindServerClassInConf('serverclass.test', 'sc_testserverclass'));
@@ -612,6 +636,11 @@ begin
     //WriteLn(FindHostInClass(pathServerClassConf, 'nottobefound*'));
     WriteLn(GetConfigPath());
     AddHostToServerClass('/home/perry/development/pascal/scmod/serverclass.conf', 'sc_testmod', 'whitelist', 'lsrvtest01*');
+    AddHostToServerClass('/home/perry/development/pascal/scmod/serverclass.conf', 'sc_whatever', 'whitelist', 'nextserver*');
+    
+    r := GetListTypeCount('whitelist.1 = thisis2*', 'whitelist');
+
+    
 
 end; // of procedure ProgTest()
 

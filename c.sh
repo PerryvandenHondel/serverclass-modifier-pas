@@ -4,12 +4,14 @@
 ## Use the set-build tool to increase the build number.
 ## Create UBuild.pas
 ##
+echo
 ~/development/pascal/set-build/set-build scmod
 
 
 ##
 ## Compile the source and move the executable to the bin directory
 ##
+echo
 fpc scmod.pas
 
 

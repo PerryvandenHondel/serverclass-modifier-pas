@@ -74,8 +74,8 @@ begin
     pathLog := ReadSettingKey(GetConfigPath(), CONF_SETTINGS, CONF_PATH_LOG);
     WriteLn('pathLog=', pathLog);
 
-    tfLog := CSplunkLog.Create(pathLog);
-	tfLog.OpenFileWrite();
+    tfLog := CSplunkLog.CreateTheFile(pathLog);
+	tfLog.OpenFileForWrite();
     
     tfLog.SetDate();
 	tfLog.SetStatus(USPLUNKLOG_LOGLEVEL_INFO);
@@ -94,7 +94,7 @@ begin
 	tfLog.AddKey(USPLUNKLOG_ACTION, 'ended');
 	tfLog.WriteLineToFile();
 
-    tfLog.CloseFile();
+    tfLog.CloseTheFile();
 end; // of procedure LogClose()
 
 
@@ -119,8 +119,8 @@ begin
 
     //WriteLn('FindHostInClass(): ', findInServerClass, ' --> ', hostName);
 
-    tf := CTextFile.Create(pathServerClassConf);
-	tf.OpenFileRead();
+    tf := CTextFile.CreateTheFile(pathServerClassConf);
+	tf.OpenFileForRead();
     
     repeat
         buffer := tf.ReadFromFile();
@@ -156,7 +156,7 @@ begin
         end; // of if
     until tf.GetEof();
 
-    tf.CloseFile();
+    tf.CloseTheFile();
     FindHostInClass := result;
 end; // of function FindHostInClass()
 
@@ -177,8 +177,8 @@ var
 begin
     Result := 0;
   
-    tf := CTextFile.Create(pathServerClassConf);
-	tf.OpenFileRead();
+    tf := CTextFile.CreateTheFile(pathServerClassConf);
+	tf.OpenFileForRead();
     
     repeat
         buffer := tf.ReadFromFile();
@@ -193,7 +193,7 @@ begin
         end; { of if }
      until tf.GetEof();
 
-    tf.CloseFile();
+    tf.CloseTheFile();
     FindServerClassInConf := Result;
 end; { of function FindServerClassInConf() }
 
@@ -389,11 +389,11 @@ procedure AddServerClass(pathServerClassConf: AnsiString; serverClass: AnsiStrin
 var
     tfServerClass: CTextFile;
 begin
-    tfServerClass := CTextFile.Create(pathServerClassConf);
-    tfServerClass.OpenFileWrite();
+    tfServerClass := CTextFile.CreateTheFile(pathServerClassConf);
+    tfServerClass.OpenFileForWrite();
     tfServerClass.WriteToFile(CHAR_LFCR); { add an extra empty line }
     tfServerClass.WriteToFile('[serverClass:' + serverClass + ']');
-    tfServerClass.CloseFile();
+    tfServerClass.CloseTheFile();
 
     tfLog.SetDate();
 	tfLog.SetStatus(USPLUNKLOG_LOGLEVEL_INFO);
@@ -452,12 +452,12 @@ begin
     pathWork := pathServerClass + '.WORK';
     fileOrg := ExtractFileName(pathServerClass);
 
-    tfr := CTextFile.Create(pathServerClass);
-    tfr.OpenFileRead();
+    tfr := CTextFile.CreateTheFile(pathServerClass);
+    tfr.OpenFileForRead();
 
-    tfw := CTextFile.Create(pathWork);
-    tfw.DeleteFile(); { First delete the file to start with an empty file. }
-    tfw.OpenFileWrite();
+    tfw := CTextFile.CreateTheFile(pathWork);
+    tfw.DeleteTheFile(); { First delete the file to start with an empty file. }
+    tfw.OpenFileForWrite();
 
     inServerClass := false;
     inListType := false;
@@ -513,14 +513,14 @@ begin
     until tfr.GetEof();
 
     { Close the work file. }    
-    tfw.CloseFile();
+    tfw.CloseTheFile();
 
     { Close the original file. }
-    tfr.CloseFile();   
+    tfr.CloseTheFile();   
 
     { The work file has now the new host name added. }
     { Delete the original file. }
-    tfr.DeleteFile();
+    tfr.DeleteTheFile();
 
     { Rename the Work file to the orginal file. }
     tfw.RenameTheFile(fileOrg);
@@ -703,8 +703,8 @@ begin
 
     MakeBackupServerClass(pathServerClassConf);
 
-    tfm := CTextFile.Create(pathModify);
-    tfm.OpenFileRead();
+    tfm := CTextFile.CreateTheFile(pathModify);
+    tfm.OpenFileForRead();
     Writeln('The status of ' + tfm.GetPath + ' is ' + BoolToStr(tfm.GetStatus, 'OPEN', 'CLOSED'));
     repeat
         line := tfm.ReadFromFile();
@@ -723,7 +723,7 @@ begin
         SetLength(s, 0); // Set the array to 0 after use.
       
     until tfm.GetEof();
-    tfm.CloseFile();
+    tfm.CloseTheFile();
 end; // of procedure ProgRun()
 
 

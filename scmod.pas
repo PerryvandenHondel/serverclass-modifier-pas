@@ -405,22 +405,18 @@ end; { of procedure AddServerClass() }
 
 
 
-function GetListTypeCount(line: AnsiString; listType: AnsiString): Integer;
+function GetListTypeCount(line: AnsiString): Integer;
 var
     numberString: AnsiString;
     curListTypeNumber: Integer;
 begin
-    //sWriteLn('GetListTypeCount()');
-    if Pos(listType, line) > 0 then
-    begin
-        //WriteLn(line);
-        { Find the number in the string line: "whitelist.12 = server*" }
-        numberString := Copy(line, Pos('.', line) + 1, Pos(' = ', line) - (Pos('.', line) + 1));
-        //WriteLn('[' + numberString + ']');
-        { Convert to number }
-        curListTypeNumber := StrToInt(numberString);
-        //WriteLn(curListTypeNumber);
-    end; { of if }
+    WriteLn('GetListType(): [', line, ']');
+    { Find the number in the string line: "whitelist.12 = server*" }
+    numberString := Copy(line, Pos('.', line) + 1, Pos(' = ', line) - (Pos('.', line) + 1));
+    
+    { Convert to number }
+    curListTypeNumber := StrToInt(numberString);
+    Writeln('GetListTypeCount(): ', curListTypeNumber);
     Result := curListTypeNumber;
 end; { function GetListTypeCount() }
 
@@ -440,7 +436,8 @@ procedure AddHostToServerClass(pathServerClass: AnsiString; serverClass: AnsiStr
 var
     tfr: CTextFile;
     tfw: CTextFile;
-    pathWork: AnsiString; { Path to temporary worker file path}
+    pathWork: AnsiString; { Path to temporary worker file path. }
+    fileOrg: AnsiString; { Name of the original file. }
     buffer: AnsiString;
     inServerClass: Boolean;
     inListType: Boolean;
@@ -453,11 +450,13 @@ begin
     DebugWriteLn(pathServerClass + CHAR_TAB + serverClass + CHAR_TAB + listType + CHAR_TAB + CHAR_TAB + hostName);
 
     pathWork := pathServerClass + '.WORK';
+    fileOrg := ExtractFileName(pathServerClass);
 
     tfr := CTextFile.Create(pathServerClass);
     tfr.OpenFileRead();
 
     tfw := CTextFile.Create(pathWork);
+    tfw.DeleteFile(); { First delete the file to start with an empty file. }
     tfw.OpenFileWrite();
 
     inServerClass := false;
@@ -469,7 +468,7 @@ begin
         //WriteLn(IntToStr(tfr.GetLineNumber()) + ': ' + tfr.ReadFromFile());
 
         buffer := tfr.ReadFromFile();
-        
+       
         if Pos('[serverClass:' + serverClass + ']', buffer) > 0 then
         begin
             inServerClass := true;
@@ -480,14 +479,18 @@ begin
             inListType := true;
         end; // of if 
 
+        if Pos(listType, buffer) = 0 then
+        begin
+            inListType := false;
+        end; // of if 
+
         if inListType = true then
         begin
-            listTypeCount := GetListTypeCount(buffer, listType);
+            listTypeCount := GetListTypeCount(buffer);
             if listTypeCount > listTypeMax then
                 listTypeMax := listTypeCount + 1;
             WriteLn('Current listTypeMax = ', listTypeMax);
         end; { of if }
-
 
         WriteLn(IntToStr(tfr.GetLineNumber()) + CHAR_TAB + BoolToStr(inServerClass, true) + CHAR_TAB + BoolToStr(inListType, true) + CHAR_TAB + buffer);
 
@@ -496,16 +499,31 @@ begin
             // You are in the server class and and empty line is found. Must be the end of the server class.
             inServerClass := false;
             
-            WriteLn('>>ADD HERE NEW HOSTNAME', CHAR_TAB, listType, CHAR_TAB, hostName);
             addLine := listType + '.' + IntToStr(listTypeMax) + ' = ' + hostName;
             WriteLn(addLine);
+
+            WriteLn('>>ADD HERE NEW HOSTNAME: ', addLine);
+            tfw.WriteToFile(addline); { write the newly created line to the new WORK file. }
+            tfw.WriteToFile(''); { Add an empty line to the new file. }
+        end
+        else
+        begin
+             tfw.WriteToFile(buffer); { write the line to the new file (WORK) }
         end; // of if 
-        
     until tfr.GetEof();
-    
+
+    { Close the work file. }    
     tfw.CloseFile();
 
+    { Close the original file. }
     tfr.CloseFile();   
+
+    { The work file has now the new host name added. }
+    { Delete the original file. }
+    tfr.DeleteFile();
+
+    { Rename the Work file to the orginal file. }
+    tfw.RenameTheFile(fileOrg);
 end; { of procedure AddHostToServerClass() }
 
 
@@ -651,10 +669,10 @@ begin
     //WriteLn(FindHostInClass(pathServerClassConf, 'nottobefound*'));
     WriteLn(GetConfigPath());
     AddHostToServerClass('/home/perry/development/pascal/scmod/serverclass.conf', 'sc_testmod', 'whitelist', 'lsrvtest01*');
-    AddHostToServerClass('/home/perry/development/pascal/scmod/serverclass.conf', 'sc_whatever', 'whitelist', 'nextserver*');
+    //AddHostToServerClass('/home/perry/development/pascal/scmod/serverclass.conf', 'sc_whatever', 'whitelist', 'nextserver*');
     
-    r := GetListTypeCount('whitelist.1 = thisis2*', 'whitelist');
-
+    //r := GetListTypeCount('whitelist.1 = thisis2*');
+    //WriteLn(r);
     
 
 end; // of procedure ProgTest()

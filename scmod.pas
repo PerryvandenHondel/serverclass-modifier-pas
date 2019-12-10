@@ -741,7 +741,7 @@ end; // of procedure ProgDone()
 
 begin
     ProgInit();
-    //ProgRun();
-    ProgTest();
+    ProgRun();
+    //ProgTest();
     ProgDone();
 end. // of program ServerClassModifier

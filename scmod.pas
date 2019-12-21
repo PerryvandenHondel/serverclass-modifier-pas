@@ -16,6 +16,21 @@ program ServerClassModifier;
     add;sc_testmod;whitelist;lsrvtest01*
     add;sc_testmod;whitelist;lsrvtest02*
     del;sc_testmod;whitelist;lsrvtest03*
+
+
+    Application Flow
+    ================
+
+    MAIN
+        ProgInit
+            ProgLogInit
+            ProgTitle
+        ProgRun
+            ProgUsage
+
+        ProgDone
+            ProgLogDone
+
 }
 
 
@@ -44,7 +59,7 @@ var
     gTextFileLog: CSplunkLog; { Class from USplunkLog. }
     gSessionId: Ansistring; { Use a unique Session ID for each run. }
     gPathModify: Ansistring; { File with the modifications for the serverclass.conf. }
-    gReference: Ansistring; { Get the reference fro the path of the modify file. }
+    gReference: Ansistring; { Get the reference from the path of the modify file. }
 
 
 
@@ -71,7 +86,7 @@ procedure ProgLogInit();
 var
     pathLog: Ansistring;
 begin
-    pathLog := ReadSettingKey(GetConfigPath(), CONF_SETTINGS, CONF_PATH_LOG);
+    pathLog := ReadSettingKey(gPathConfig, CONF_SETTINGS, CONF_PATH_LOG);
     WriteLn('pathLog=', pathLog);
 
     gTextFileLog := CSplunkLog.CreateTheFile(pathLog);
@@ -155,7 +170,13 @@ begin
     begin
         gPathModify := ParamStr(1);
         gReference := GetReferenceFromPath(gPathModify);
-        Writeln(gReference);
+        Writeln('gReference=', gReference);
+
+        gPathServerClass := ReadSettingKey(gPathConfig, CONF_SETTINGS, CONF_PATH_SERVERCLASS);
+        WriteLn('gPathServerClass=', gPathServerClass);
+
+
+
     end; { of if }
 end; { of procedure ProgRun() }
 

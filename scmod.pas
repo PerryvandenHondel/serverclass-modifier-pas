@@ -40,6 +40,7 @@ var
     gPathConfig: Ansistring; { Global path of the applications path \dir\dir\file.conf }
     gPathServerClass: Ansistring; { Global path of Splunk's serverclass.conf file. }
     gTextFileLog: CSplunkLog; { Class from USplunkLog }
+    gSessionId: Ansistring; { Use a unique Session ID for each run }
 
 
 
@@ -52,13 +53,26 @@ begin
 
     gTextFileLog := CSplunkLog.CreateTheFile(pathLog);
 	gTextFileLog.OpenFileForWrite();
-    
+
+    gTextFileLog.SetDate();
+	gTextFileLog.SetStatus(USPLUNKLOG_LOGLEVEL_INFO);
+    gTextFileLog.AddKey(USPLUNKLOG_COMPONENT, 'scmod');
+    gTextFileLog.AddKey(USPLUNKLOG_SESSION, gSessionId);
+	gTextFileLog.AddKey(USPLUNKLOG_ACTION, 'started');
+	gTextFileLog.WriteLineToFile();
 end; { of procedure ProgLogInit() }
 
 
 
 procedure ProgLogDone();
 begin
+    gTextFileLog.SetDate();
+	gTextFileLog.SetStatus(USPLUNKLOG_LOGLEVEL_INFO);
+    gTextFileLog.AddKey(USPLUNKLOG_COMPONENT, 'scmod');
+    gTextFileLog.AddKey(USPLUNKLOG_SESSION, gSessionId);
+	gTextFileLog.AddKey(USPLUNKLOG_ACTION, 'ended');
+	gTextFileLog.WriteLineToFile();
+
     gTextFileLog.CloseTheFile();
 end; { of procedure ProgLogDone() }
 
@@ -66,21 +80,20 @@ end; { of procedure ProgLogDone() }
 
 procedure ProgInit();
 begin
+    gSessionId := RandomString(32); { Generate a unique Session ID for each run. }
+    
     { Get the config file of this application. }
     gPathConfig := GetConfigPath();
     WriteLn(gPathConfig);
 
     ProgLogInit();
-    
-    gPathServerClass := 
-
 end; { of procedure ProgInit() }
 
 
 
 procedure ProgRun();
 begin
-    
+    WriteLn(RandomString(32));
 end; { of procedure ProgRun() }
 
 

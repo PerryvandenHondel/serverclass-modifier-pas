@@ -43,7 +43,8 @@ uses
     SysUtils,
     UBuild,
     USplunkLog,
-    USupLib;
+    USupLib,
+    UTextFile;
 
 
 
@@ -80,6 +81,28 @@ begin
     Writeln('GetReferenceFromPath()=', r);
     GetReferenceFromPath := UpperCase(r);
 end; // of function GetReferenceFromPath
+
+
+
+procedure ModifyServerClass(pathServerClass: Ansistring);
+var
+    textFileServerClass: CTextFile;
+    buffer: Ansistring;
+begin
+    WriteLn('ModifyServerClass() pathServerClass=', pathServerClass);
+
+    textFileServerClass := CTextFile.CreateTheFile(pathServerClass);
+	textFileServerClass.OpenFileForRead();
+        
+    repeat
+        buffer := textFileServerClass.ReadFromFile();
+        WriteLn(textFileServerClass.GetLineNumber(), ': ', buffer);
+
+    until textFileServerClass.GetEof();
+
+    textFileServerClass.CloseTheFile();
+
+end; {of procedure ModifyServerClass() }
 
 
 procedure ProgLogInit();
@@ -175,7 +198,7 @@ begin
         gPathServerClass := ReadSettingKey(gPathConfig, CONF_SETTINGS, CONF_PATH_SERVERCLASS);
         WriteLn('gPathServerClass=', gPathServerClass);
 
-
+        ModifyServerClass(gPathServerClass); 
 
     end; { of if }
 end; { of procedure ProgRun() }

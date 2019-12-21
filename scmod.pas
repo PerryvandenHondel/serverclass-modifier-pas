@@ -25,6 +25,8 @@ program ServerClassModifier;
 
 
 uses
+    SysUtils,
+    UBuild,
     USplunkLog,
     USupLib;
 
@@ -37,11 +39,32 @@ const
 
 
 var
-    gPathConfig: Ansistring; { Global path of the applications path \dir\dir\file.conf }
+    gPathConfig: Ansistring; { Global path of the applications path \dir\dir\file.conf. }
     gPathServerClass: Ansistring; { Global path of Splunk's serverclass.conf file. }
-    gTextFileLog: CSplunkLog; { Class from USplunkLog }
-    gSessionId: Ansistring; { Use a unique Session ID for each run }
+    gTextFileLog: CSplunkLog; { Class from USplunkLog. }
+    gSessionId: Ansistring; { Use a unique Session ID for each run. }
+    gPathModify: Ansistring; { File with the modifications for the serverclass.conf. }
+    gReference: Ansistring; { Get the reference fro the path of the modify file. }
 
+
+
+function GetReferenceFromPath(path: AnsiString): AnsiString;
+{
+    Returns the reference from the path of the modify file.
+
+    path: /dir/dir/dir/<reference>.csv
+
+    Returns: <reference> path of the file.
+}
+var
+    r: AnsiString;
+begin
+    r := ExtractFileName(path); // From Sysutils
+    r := LeftStr(r, Pos('.', r) - 1);
+
+    Writeln('GetReferenceFromPath()=', r);
+    GetReferenceFromPath := UpperCase(r);
+end; // of function GetReferenceFromPath
 
 
 procedure ProgLogInit();
@@ -78,6 +101,32 @@ end; { of procedure ProgLogDone() }
 
 
 
+procedure ProgTitle();
+begin
+    writeln();
+    writeln('scmod v', VERSION_MAJOR,'.', VERSION_MINOR, '.', BUILD, ' - Splunk serverclass.conf modifier, add or delete hosts from a server class in the whitelist or blacklist section.');
+    writeln();
+end; { of procedure ProgTitle() }
+
+
+
+procedure ProgUsage();
+begin
+    writeln('Usage: scmod <modifyfile>');
+    writeln('  <modifyfile>     File with the modify information.');
+    writeln();
+    writeln('The modify file is a CSV formated file.');
+    writeln('Format:');
+    writeln('<action>;<serverclass>;<listtype>;<hostname>');
+    writeln(CHAR_TAB, 'action = add or del');
+    writeln(CHAR_TAB, 'serverclass = the name of the server class to modify');
+    writeln(CHAR_TAB, 'listtype = whitelist or blacklist');
+    writeln(CHAR_TAB, 'hostname = The name of the host, use wildcard at the end');
+    Writeln();
+ end; { of procedure ProgUsage() }
+
+
+
 procedure ProgInit();
 begin
     gSessionId := RandomString(32); { Generate a unique Session ID for each run. }
@@ -87,13 +136,27 @@ begin
     WriteLn(gPathConfig);
 
     ProgLogInit();
+
+    ProgTitle();
+
 end; { of procedure ProgInit() }
 
 
 
 procedure ProgRun();
 begin
-    WriteLn(RandomString(32));
+     // We have a param string; must be the path to the Modigy file.
+    if ParamCount <> 1 then
+    begin
+        ProgUsage();
+    end; { of if }
+
+    if ParamCount = 1 then
+    begin
+        gPathModify := ParamStr(1);
+        gReference := GetReferenceFromPath(gPathModify);
+        Writeln(gReference);
+    end; { of if }
 end; { of procedure ProgRun() }
 
 

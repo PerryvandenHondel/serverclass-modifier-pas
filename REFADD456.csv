@@ -1,0 +1,3 @@
+add;svcc_ami_p;whitelist;lsrvtest01*
+add;svcc_ami_p;whitelist;lsrvtest02*
+add;svcc_ami_p;whitelist;lsrvtest03*

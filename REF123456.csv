@@ -1,0 +1,9 @@
+add;sc_testmod;whitelist;lsrvtest01*
+add;sc_testmod;whitelist;lsrvtest02*
+add;sc_testmod;whitelist;lsrvtest03*
+add;svcc_sh_p;whitelist;servertoadd*
+add;sc_andanotherone;whitelist;servertoaddagain*
+add;sc_whatever;whitelist;thisisahostname*
+add;sc_neverfound;blacklist;nevertobefound1*
+del;sc_andanotherone;blacklist;serverdelthisone*
+thisisawrongaction;sc_andanotherone;blacklist;serverdelthisone*

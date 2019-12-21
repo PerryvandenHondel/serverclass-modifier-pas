@@ -1,0 +1,3 @@
+del;sc_testmod;whitelist;lsrvtest01*
+del;sc_testmod;whitelist;lsrvtest02*
+del;sc_testmod;whitelist;lsrvtest03*

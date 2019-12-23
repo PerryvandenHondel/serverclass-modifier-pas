@@ -5,8 +5,8 @@ interface
 const
 	VERSION_MAJOR = 3;
 	VERSION_MINOR = 0;
-	BUILD = 303;
-	BUILD_DT = '2019-12-21 23:56:16.022';
+	BUILD = 311;
+	BUILD_DT = '2019-12-23 19:46:09.051';
 
 implementation
 

@@ -85,8 +85,14 @@ end; // of function GetReferenceFromPath
 
 
 function GetServerClass(buffer: Ansistring): Ansistring;
+var 
+    l: Integer;
+    p: Integer;
 begin
-    
+    l := Length(buffer); { The length of the string buffer}
+    p := Pos(':', buffer);
+    Result := Copy(buffer, p + 1, l - p - 1);
+    WriteLn('GetServerClass(): result=[', result, ']');
 end; { of function GetServerClass() }
 
 
@@ -94,16 +100,20 @@ procedure ProcessServerClassLine(buffer: Ansistring);
 var
     currentServerClass: Ansistring;
 begin
-    WriteLn('ProcessServerClassLine(): buffer=[', buffer, ']');
-    WriteLn(Occurs(buffer, ':'));
-    WriteLn(Pos('[serverClass:', buffer));
+    //WriteLn('ProcessServerClassLine(): buffer=[', buffer, ']');
+    //WriteLn(Occurs(buffer, ':'));
+    //WriteLn(Pos('[serverClass:', buffer));
     //if Occurs(':', buffer)
 
     if (Occurs(buffer, ':') = 1) and (Pos('[serverClass:', buffer) > 0) then
     begin
         { We find the line of the server class [serverClass:thisisaserverclass] }
-        WriteLn('Found serverclass with hostnames!!')
+        WriteLn('Found serverclass with hostnames!!');
+        Writeln(GetServerClass(buffer));
+        currentServerClass := GetServerClass(buffer);
     end; { of if }
+
+    WriteLn(currentServerClass, ': ', buffer);
 
     WriteLn();
 

@@ -27,7 +27,8 @@ program ServerClassModifier;
             ProgTitle
         ProgRun
             ProgUsage
-
+            ModifyServerClass
+                ProcessServerClassLine
         ProgDone
             ProgLogDone
 
@@ -78,10 +79,35 @@ begin
     r := ExtractFileName(path); // From Sysutils
     r := LeftStr(r, Pos('.', r) - 1);
 
-    Writeln('GetReferenceFromPath()=', r);
+    // Writeln('GetReferenceFromPath()=', r);
     GetReferenceFromPath := UpperCase(r);
 end; // of function GetReferenceFromPath
 
+
+function GetServerClass(buffer: Ansistring): Ansistring;
+begin
+    
+end; { of function GetServerClass() }
+
+
+procedure ProcessServerClassLine(buffer: Ansistring);
+var
+    currentServerClass: Ansistring;
+begin
+    WriteLn('ProcessServerClassLine(): buffer=[', buffer, ']');
+    WriteLn(Occurs(buffer, ':'));
+    WriteLn(Pos('[serverClass:', buffer));
+    //if Occurs(':', buffer)
+
+    if (Occurs(buffer, ':') = 1) and (Pos('[serverClass:', buffer) > 0) then
+    begin
+        { We find the line of the server class [serverClass:thisisaserverclass] }
+        WriteLn('Found serverclass with hostnames!!')
+    end; { of if }
+
+    WriteLn();
+
+end; {of procedure ProcessServerClassLine() }
 
 
 procedure ModifyServerClass(pathServerClass: Ansistring);
@@ -96,7 +122,8 @@ begin
         
     repeat
         buffer := textFileServerClass.ReadFromFile();
-        WriteLn(textFileServerClass.GetLineNumber(), ': ', buffer);
+        //WriteLn(textFileServerClass.GetLineNumber(), ': ', buffer);
+        ProcessServerClassLine(buffer);
 
     until textFileServerClass.GetEof();
 

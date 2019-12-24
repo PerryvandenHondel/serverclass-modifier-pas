@@ -84,7 +84,14 @@ begin
 end; // of function GetReferenceFromPath
 
 
+
 function GetServerClass(buffer: Ansistring): Ansistring;
+{
+    From the buffer determine the serverclass.
+    Line is in format: "[serverClass=serverclassname]" (no quotes)
+
+    Returns "serverclassname" (no double quotes)
+}
 var 
     l: Integer;
     p: Integer;
@@ -92,54 +99,52 @@ begin
     l := Length(buffer); { The length of the string buffer}
     p := Pos(':', buffer);
     Result := Copy(buffer, p + 1, l - p - 1);
-    WriteLn('GetServerClass(): result=[', result, ']');
+    //WriteLn('GetServerClass(): result=[', result, ']');
 end; { of function GetServerClass() }
 
-
-procedure ProcessServerClassLine(buffer: Ansistring);
-var
-    currentServerClass: Ansistring;
-begin
-    //WriteLn('ProcessServerClassLine(): buffer=[', buffer, ']');
-    //WriteLn(Occurs(buffer, ':'));
-    //WriteLn(Pos('[serverClass:', buffer));
-    //if Occurs(':', buffer)
-
-    if (Occurs(buffer, ':') = 1) and (Pos('[serverClass:', buffer) > 0) then
-    begin
-        { We find the line of the server class [serverClass:thisisaserverclass] }
-        WriteLn('Found serverclass with hostnames!!');
-        Writeln(GetServerClass(buffer));
-        currentServerClass := GetServerClass(buffer);
-    end; { of if }
-
-    WriteLn(currentServerClass, ': ', buffer);
-
-    WriteLn();
-
-end; {of procedure ProcessServerClassLine() }
 
 
 procedure ModifyServerClass(pathServerClass: Ansistring);
 var
     textFileServerClass: CTextFile;
     buffer: Ansistring;
+    currentServerClass: Ansistring;
+    inServerClass: Boolean; 
+    inListType: Boolean;
 begin
     WriteLn('ModifyServerClass() pathServerClass=', pathServerClass);
 
     textFileServerClass := CTextFile.CreateTheFile(pathServerClass);
 	textFileServerClass.OpenFileForRead();
-        
+    inServerClass := false;
+    inListType := false;
     repeat
         buffer := textFileServerClass.ReadFromFile();
         //WriteLn(textFileServerClass.GetLineNumber(), ': ', buffer);
-        ProcessServerClassLine(buffer);
+        
+        if (Occurs(buffer, ':') = 1) and (Pos('[serverClass:', buffer) > 0) then
+        begin
+            { We find the line of the server class [serverClass:thisisaserverclass] }
+            currentServerClass := GetServerClass(buffer);
+            inServerClass := true;
+        end; { of if }
 
+        if (Pos('whitelist', buffer) > 0) or (Pos('blacklist', buffer) > 0) then
+            inListType := true
+        else
+            inListType := false;
+
+        if (inServerClass = true) and (inListType = true) then
+            WriteLn(currentServerClass, ': buffer=[', buffer, ']')
+        else
+            WriteLn('buffer=[', buffer, ']');
+        
     until textFileServerClass.GetEof();
 
     textFileServerClass.CloseTheFile();
 
 end; {of procedure ModifyServerClass() }
+
 
 
 procedure ProgLogInit();
